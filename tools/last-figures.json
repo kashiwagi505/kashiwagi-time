@@ -1,0 +1,32 @@
+[
+ {
+  "key": "s02-juice-stand",
+  "src": "s02_juice_stand.png",
+  "srcKb": 1102,
+  "dims": "1672x941",
+  "full": 38,
+  "page": 21,
+  "sm": 13,
+  "use": "第2回スライド5 オーバーロード（図C）。この回の主役の図"
+ },
+ {
+  "key": "s02-creation-ui",
+  "src": "s02_hero_and_creation_ui.png",
+  "srcKb": 1024,
+  "dims": "1672x941",
+  "full": 32,
+  "page": 18,
+  "sm": 11,
+  "use": "第2回スライド1 アイキャッチ／スライド3 コンストラクタ"
+ },
+ {
+  "key": "s02-object-factory",
+  "src": "s02_object_factory.png",
+  "srcKb": 965,
+  "dims": "1672x941",
+  "full": 27,
+  "page": 15,
+  "sm": 10,
+  "use": "第2回スライド2・8 コンストラクタ＝オブジェクト製造機"
+ }
+]

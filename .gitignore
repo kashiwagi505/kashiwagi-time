@@ -1,0 +1,28 @@
+# Eleventy のビルド出力
+_site/
+
+# 依存パッケージ（site/ と site/tools/ の両方）
+node_modules/
+
+# エディタ・OS
+.DS_Store
+Thumbs.db
+*.swp
+
+# ログ
+npm-debug.log*
+*.log
+
+# Eleventy のキャッシュ
+.cache/
+
+# 画像の編集用マスター（透過PNG 計17MB）
+#   配信は WebP のみ（src/assets/img/）。WebP は PNG と同解像度・アルファ付きなので
+#   PNG に配信上の役割は無く、リポジトリを重くするだけ。
+#   真の原本は 元資料の image/ 側で保全されており、masters/ は
+#   site/tools/make-transparent.js で再生成できる中間物。
+masters/
+
+# ※ src/assets/js/prism.js と prism.css は「同梱物」なのでコミットする
+#    （node_modules が無い環境でもビルドできるようにするため。
+#     再生成は npm run vendor:prism）

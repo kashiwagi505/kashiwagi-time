@@ -1,0 +1,212 @@
+/* ===========================================================================
+   code.css — コードブロックの枠・バッジ・ラベル
+   ---------------------------------------------------------------------------
+   ★ここで扱うのは「コードブロックの外側」だけ。
+     トークンの色（キーワード・文字列・コメント）は assets/js/prism.css
+     （prism-tomorrow をそのまま同梱）に任せ、一切上書きしない。
+     decisions.md 決定6 / design-notes.md 0章
+       「世界観要素をコードのハイライト配色に持ち込まない」
+
+   HTML の構造（config/codeblocks.js が生成する）:
+     <figure class="codeblock codeblock--code">
+       <figcaption class="codeblock__head">
+         <span class="codeblock__badge">…</span>
+         <span class="codeblock__file">Hero.java</span>
+       </figcaption>
+       <div class="codeblock__body">
+         <pre class="language-java line-numbers" data-line="3-5"><code class="language-java">…</code></pre>
+         <button class="codeblock__copy">コピー</button>
+       </div>
+     </figure>
+
+   種別: codeblock--code / --error / --pseudo / --output
+        （--error には .code-error、--pseudo には .code-pseudo、
+          --output には .code-output も同時に付く）
+   =========================================================================== */
+
+.codeblock {
+  margin: var(--sp-5) 0;
+  border-radius: var(--radius-m);
+  overflow: hidden;                 /* 角丸から中身がはみ出さないように */
+  box-shadow: var(--shadow-s);
+  background: var(--c-code-bg);
+}
+
+/* -- ヘッダ（バッジ・ファイル名） ----------------------------------------- */
+.codeblock__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-2) var(--sp-4);
+  background: #23232b;
+  border-bottom: 1px solid #3a3a44;
+  font-size: var(--fs-1);
+  line-height: 1.8;
+}
+.codeblock__badge {
+  display: inline-block;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.codeblock__file {
+  font-family: var(--font-code);
+  color: #aeb0bd;
+  font-size: var(--fs-1);
+}
+
+/* -- 本体 ----------------------------------------------------------------- */
+.codeblock__body { position: relative; }
+
+/* Prism テーマの pre をこの枠に合わせる（色は触らない） */
+.codeblock pre[class*="language-"] {
+  margin: 0;
+  border-radius: 0;
+  font-size: var(--fs-2);
+  line-height: 1.7;
+  tab-size: 4;
+}
+.codeblock code[class*="language-"],
+.codeblock pre[class*="language-"] {
+  font-family: var(--font-code);
+  /* 日本語コメントが折り返さず横スクロールになるようにする */
+  white-space: pre;
+  word-break: normal;
+}
+
+/* コピーボタン用に右側の余白を少し足す */
+.codeblock--code pre[class*="language-"],
+.codeblock--error pre[class*="language-"] { padding-right: 5.5em; }
+
+/* -- コピーボタン --------------------------------------------------------- */
+/* 実行結果（--output）・擬似コード（--pseudo）にはボタン自体を出力していない */
+.codeblock__copy {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid #4e4e5c;
+  border-radius: var(--radius-s);
+  background: #3a3a44;
+  color: #d6d7e0;
+  font-family: var(--font-body);
+  font-size: var(--fs-1);
+  line-height: 1.7;
+  cursor: pointer;
+  transition: opacity 0.12s ease-out;
+}
+.codeblock__copy:hover { background: #4a4a58; color: #fff; }
+.codeblock__copy.is-done { background: var(--c-ok); border-color: var(--c-ok); color: #fff; opacity: 1; }
+
+/* 既定では常に表示しておく（タッチ端末・キーボード操作でも押せるように）。
+   マウスが使える広い画面でだけ、hover するまで薄くして邪魔にならないようにする。 */
+@media (hover: hover) and (min-width: 641px) {
+  .codeblock__copy { opacity: 0; }
+  .codeblock:hover .codeblock__copy,
+  .codeblock__copy:focus-visible,
+  .codeblock__copy.is-done { opacity: 1; }
+}
+
+/* ===========================================================================
+   種別ごとの見た目（decisions.md 決定5 の表）
+   =========================================================================== */
+
+/* 1. ```java — ふつうの Java コード。バッジ無し。枠は控えめ */
+.codeblock--code { border: 1px solid #3a3a44; }
+
+/* 2. ```java error — わざとコンパイルエラーになるコード */
+.codeblock--error { border: 2px solid var(--c-danger-border); }
+.codeblock--error .codeblock__head {
+  background: var(--c-danger);
+  border-bottom-color: var(--c-danger);
+}
+.codeblock--error .codeblock__badge { background: #fff; color: var(--c-danger); }
+.codeblock--error .codeblock__file { color: #ffd9d6; }
+
+/* 3. ```text — 実行結果・コンソール出力・入力例。ハイライトしない */
+.codeblock--output { border: 1px solid var(--c-border-strong); }
+.codeblock--output .codeblock__head {
+  background: var(--c-bg-sub);
+  border-bottom-color: var(--c-border-strong);
+}
+.codeblock--output .codeblock__badge {
+  background: var(--c-accent);
+  color: #fff;
+}
+.codeblock--output .codeblock__file { color: var(--c-text-mute); }
+/* 出力は「ターミナルの写し」に見せる。文字色は落ち着いた1色 */
+.codeblock--output pre[class*="language-"] {
+  background: #1f1f26;
+  color: #dfe1e8;
+}
+.codeblock--output code[class*="language-"] { color: #dfe1e8; text-shadow: none; }
+
+/* 4. ```text pseudo — 日本語混じりの擬似コード。実行できるコードに見せない */
+.codeblock--pseudo { background: var(--c-bg-raised); border: 2px dashed var(--c-border-strong); }
+.codeblock--pseudo .codeblock__head {
+  background: var(--c-bg-sub);
+  border-bottom: 1px dashed var(--c-border-strong);
+}
+.codeblock--pseudo .codeblock__badge { background: var(--c-text-mute); color: #fff; }
+/* 擬似コードは明るい地に黒文字（実行できるコードと明確に見た目を変える） */
+.codeblock--pseudo pre[class*="language-"] {
+  background: var(--c-bg-raised);
+  color: var(--c-text);
+  font-family: var(--font-body);   /* 等幅にしない＝ソースコードに見せない */
+}
+.codeblock--pseudo code[class*="language-"] {
+  color: var(--c-text);
+  text-shadow: none;
+  font-family: var(--font-body);
+  white-space: pre-wrap;           /* 日本語文なので折り返してよい */
+}
+.codeblock--pseudo .line-numbers-rows { border-right-color: var(--c-border); }
+.codeblock--pseudo .line-numbers-rows > span::before { color: var(--c-text-mute); }
+
+/* ===========================================================================
+   行番号・行強調（Prism 公式プラグイン）の微調整
+   =========================================================================== */
+.codeblock .line-numbers-rows { border-right-color: #4a4a58; }
+/* 強調行は金の帯にする（世界観ではなく「ここを見て」の機能色） */
+.codeblock .line-highlight {
+  background: linear-gradient(to right, rgba(166, 124, 0, 0.28), rgba(166, 124, 0, 0.06));
+}
+.codeblock .line-highlight::before,
+.codeblock .line-highlight::after {
+  background-color: var(--c-gold);
+  color: #fff;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+/* ===========================================================================
+   本文中のインラインコード（`private` など）
+   ---------------------------------------------------------------------------
+   本文の地の文に混ざるので、素直な等幅表示にとどめる。
+   =========================================================================== */
+.prose :not(pre) > code {
+  font-family: var(--font-code);
+  font-size: 0.925em;
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-s);
+  background: var(--c-bg-sub);
+  color: var(--c-accent-strong);
+  /* nowrap にしてはいけない。`Player(String name, int maxHp, int defense)` のような
+     長いシグネチャをインライン記法で書くと、375px でページ全体が横スクロールする
+     （実際に発生した）。pre-wrap で連続スペースは保ちつつ折り返せるようにし、
+     途中で切る場所が無い長い識別子だけ anywhere で逃がす。 */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ===========================================================================
+   小さい画面
+   =========================================================================== */
+@media (max-width: 640px) {
+  .codeblock { margin-left: calc(var(--sp-4) * -1); margin-right: calc(var(--sp-4) * -1); border-radius: 0; }
+  .codeblock pre[class*="language-"] { font-size: 0.8125rem; }
+}

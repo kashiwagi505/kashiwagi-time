@@ -1,0 +1,82 @@
+{
+  "name": "柏木タイム",
+  "tagline": "Java オブジェクト指向 全7回",
+  "description": "図解でつかんで、そのまま使ってみる。Java のオブジェクト指向を全7回で学ぶ社内勉強会の教材サイト。",
+  "lang": "ja",
+  "repoNote": "元資料は 柏木タイム/ に保全（サイトからは配布しない）",
+
+  "totalLessons": 7,
+
+  "project": {
+    "label": "勇者一行のチャレンジプロジェクト",
+    "shortLabel": "チャレンジ",
+    "note": "第4回からは「勇者一行」を共通の題材にして、1本のプロジェクトを育てていきます。",
+    "fromOrder": 4
+  },
+
+  "lessons": [
+    {
+      "order": 1,
+      "slug": "01-class",
+      "title": "クラスの概念",
+      "worldName": "設計図の書",
+      "summary": "クラスは設計図、インスタンスはそこから作られた実体。まずこの2つの関係を図でつかむ。",
+      "topics": ["クラス", "インスタンス", "フィールド", "メソッド"],
+      "project": false
+    },
+    {
+      "order": 2,
+      "slug": "02-overload",
+      "title": "オーバーロード・コンストラクタ",
+      "worldName": "生成の書",
+      "summary": "同じ名前で受け取るものを変える（オーバーロード）と、作った瞬間に中身を決める（コンストラクタ）。",
+      "topics": ["オーバーロード", "コンストラクタ", "引数の違い"],
+      "project": false
+    },
+    {
+      "order": 3,
+      "slug": "03-encapsulation",
+      "title": "カプセル化",
+      "worldName": "守りの書",
+      "summary": "外から直接いじらせない。private で閉じて、getter / setter だけを窓口にする。",
+      "topics": ["private", "getter / setter", "情報隠蔽"],
+      "project": false
+    },
+    {
+      "order": 4,
+      "slug": "04-arraylist",
+      "title": "ArrayList",
+      "worldName": "名簿の書",
+      "summary": "勇者一行の名簿を作る。配列と違って、増やす・減らすが自由にできる入れ物。",
+      "topics": ["ArrayList", "add / get / remove", "拡張for", "sort"],
+      "project": true
+    },
+    {
+      "order": 5,
+      "slug": "05-inheritance",
+      "title": "継承・オーバーライド",
+      "worldName": "血脈の書",
+      "summary": "冒険者クラスを親にして、勇者・魔法使い・戦士を派生させる。共通は親、違いは子。",
+      "topics": ["extends", "super", "オーバーライド", "is-a / has-a"],
+      "project": true
+    },
+    {
+      "order": 6,
+      "slug": "06-polymorphism",
+      "title": "ポリモーフィズム",
+      "worldName": "変幻の書",
+      "summary": "中身は職業ごとに違うのに、呼び出し方は1つ。親の型でまとめて扱う。",
+      "topics": ["親型で扱う", "動的束縛", "アップキャスト"],
+      "project": true
+    },
+    {
+      "order": 7,
+      "slug": "07-abstract",
+      "title": "抽象クラス・インターフェイス",
+      "worldName": "契約の書",
+      "summary": "「冒険者」そのものは実装したくない＝抽象クラス。「武器を持つ」「呪文を覚える」＝インターフェイス。",
+      "topics": ["abstract", "implements", "多重実装"],
+      "project": true
+    }
+  ]
+}

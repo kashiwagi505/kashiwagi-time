@@ -1,0 +1,14 @@
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="site-header__brand" href="{{ 'index.html' | rel }}">
+      <span class="site-header__name">{{ site.name }}</span>
+      <span class="site-header__tagline">{{ site.tagline }}</span>
+    </a>
+    <nav class="site-nav" aria-label="サイト内の移動">
+      <ul>
+        <li><a href="{{ 'index.html' | rel }}"{% if page.url == '/index.html' %} aria-current="page"{% endif %}>トップ</a></li>
+        <li><a href="{{ 'start.html' | rel }}"{% if page.url == '/start.html' %} aria-current="page"{% endif %}>はじめに</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>

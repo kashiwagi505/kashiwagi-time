@@ -1,0 +1,22 @@
+{
+  "name": "kashiwagi-time-site",
+  "private": true,
+  "version": "1.0.0",
+  "description": "柏木タイム（Java オブジェクト指向 全7回）学習サイト",
+  "scripts": {
+    "build": "npm run clean && eleventy",
+    "build:fast": "eleventy",
+    "build:dev": "npm run clean && node -e \"process.env.ELEVENTY_ENV='dev';require('child_process').execSync('eleventy',{stdio:'inherit',env:process.env,shell:true})\"",
+    "start": "eleventy --serve",
+    "serve": "eleventy --serve",
+    "serve:dev": "node -e \"process.env.ELEVENTY_ENV='dev';require('child_process').execSync('eleventy --serve',{stdio:'inherit',env:process.env,shell:true})\"",
+    "clean": "node -e \"require('fs').rmSync('_site',{recursive:true,force:true})\"",
+    "serve:built": "node tools/serve-built.js",
+    "vendor:prism": "node config/vendor-prism.js",
+    "check": "node config/check.js"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.6",
+    "prismjs": "^1.30.0"
+  }
+}

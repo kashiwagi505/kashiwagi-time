@@ -1,0 +1,43 @@
+{#-
+  各回ページの前後リンク。ページの上部と下部の両方に同じものを置く
+  （site-map.md 5章：長いページを下まで読んでから上に戻らせない）。
+  リンク先は collections.lessons から自動生成するので手作業の修正は不要。
+-#}
+{% set nb = collections.lessons | neighbors(lesson.order) %}
+<nav class="lesson-nav" aria-label="回の移動">
+  <p class="lesson-nav__pos">第{{ lesson.order }}回 / 全{{ nb.total }}回</p>
+  <ul class="lesson-nav__list">
+    <li class="lesson-nav__item lesson-nav__item--prev">
+      {%- if nb.prev %}
+      <a href="{{ nb.prev.url | rel }}" rel="prev">
+        <span class="lesson-nav__dir">← 前の回</span>
+        <span class="lesson-nav__label">第{{ nb.prev.data.lesson.order }}回 {{ nb.prev.data.lesson.title }}</span>
+      </a>
+      {%- else %}
+      <span class="lesson-nav__none">
+        <span class="lesson-nav__dir">← 前の回</span>
+        <span class="lesson-nav__label">ここが最初の回です</span>
+      </span>
+      {%- endif %}
+    </li>
+    <li class="lesson-nav__item lesson-nav__item--index">
+      <a href="{{ 'index.html' | rel }}">
+        <span class="lesson-nav__dir">一覧へ</span>
+        <span class="lesson-nav__label">全{{ nb.total }}回</span>
+      </a>
+    </li>
+    <li class="lesson-nav__item lesson-nav__item--next">
+      {%- if nb.next %}
+      <a href="{{ nb.next.url | rel }}" rel="next">
+        <span class="lesson-nav__dir">次の回 →</span>
+        <span class="lesson-nav__label">第{{ nb.next.data.lesson.order }}回 {{ nb.next.data.lesson.title }}</span>
+      </a>
+      {%- else %}
+      <span class="lesson-nav__none">
+        <span class="lesson-nav__dir">次の回 →</span>
+        <span class="lesson-nav__label">ここが最後の回です</span>
+      </span>
+      {%- endif %}
+    </li>
+  </ul>
+</nav>

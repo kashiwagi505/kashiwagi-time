@@ -1,0 +1,1177 @@
+/* ===========================================================================
+   figures.css — 図解の部品ライブラリ
+   ---------------------------------------------------------------------------
+   config/shortcodes.js が出す HTML のスタイル。教材の主役はこの図解。
+
+   ★守っている約束
+     1. 色は tokens.css の CSS 変数だけを使う（生の16進数を書かない）
+     2. 概念色の予約: --c-info（黄）＝情報／フィールド、--c-action（青）＝動作／メソッド
+        図の内部では --c-accent（藍）を「意味を持つ色」として使わない。
+        藍は「図の枠・ラベル」など構造の色としてだけ使う
+     3. ブレークポイントは 640px / 900px の2段だけ
+     4. code.css の後に読み込まれるので、pre / code / .codeblock を
+        大域的に触らない。図の中に置かれた .codeblock の余白だけ、
+        .figure の内側に限って打ち消す（下の「コードブロックとの同居」）
+
+   ★決定3（図のスマホ対応）の実装 = このファイルの中心
+     横に並ぶ箱は必ず .fig-row に入れてある。畳むかどうかはルートの figure が決める。
+       .figure--stack … 640px 以下で縦積み（カード列・継承ツリー・まとめ3ステップ）
+       .figure--hold  … 横並びを維持し、入らなければ .figure__scroll で横スクロール
+                        （左右対比・コード↔出力・リストの列・並行配列・流れ）
+     hold のルールを stack より後に書いてあるので、
+     「対比型の中に入れた非対比型の部品」は横並びのまま残る（入れ子でも壊れない）。
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   0. 図だけで使う寸法
+   --------------------------------------------------------------------------- */
+:root {
+  --fig-card-w: 8.5rem;      /* カード1枚の基準幅 */
+  --fig-card-w-s: 6.5rem;    /* 小さいカード（リストの列の中など） */
+  --fig-chara-s: 2.5rem;     /* 立ち絵の枠（画像が無くてもこの寸法は残る） */
+  --fig-chara-m: 4rem;
+  --fig-chara-l: 7rem;
+  --fig-cell-h: 2.25rem;     /* 並行配列の1セルの高さ */
+  --fig-gate-w: 11.5rem;     /* カプセル図の窓口の幅 */
+  --fig-line: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   1. 概念色のスイッチ（data-tone）
+   ---------------------------------------------------------------------------
+   すべての部品はこの3つの変数だけを見る。色の意味づけはここに集約する。
+   --------------------------------------------------------------------------- */
+[data-tone] {
+  --t-bg: var(--c-bg-raised);
+  --t-bd: var(--c-border-strong);
+  --t-fg: var(--c-text);
+}
+[data-tone="info"]   { --t-bg: var(--c-info-bg);   --t-bd: var(--c-info-border);   --t-fg: var(--c-info); }
+[data-tone="action"] { --t-bg: var(--c-action-bg); --t-bd: var(--c-action-border); --t-fg: var(--c-action); }
+[data-tone="gold"]   { --t-bg: var(--c-gold-soft); --t-bd: var(--c-gold);          --t-fg: var(--c-gold); }
+[data-tone="ok"]     { --t-bg: var(--c-ok-bg);     --t-bd: var(--c-ok);            --t-fg: var(--c-ok); }
+[data-tone="danger"] { --t-bg: var(--c-danger-bg); --t-bd: var(--c-danger-border); --t-fg: var(--c-danger); }
+[data-tone="mute"]   { --t-bg: var(--c-bg-sub);    --t-bd: var(--c-border);        --t-fg: var(--c-text-mute); }
+[data-tone="plain"]  { --t-bg: var(--c-bg-raised); --t-bd: var(--c-border-strong); --t-fg: var(--c-text); }
+[data-tone="dim"]    { --t-bg: var(--c-bg-sub);    --t-bd: var(--c-border);        --t-fg: var(--c-text-mute); }
+[data-tone="code"]   { --t-bg: var(--c-code-bg);   --t-bd: var(--c-border-strong); --t-fg: var(--c-code-text); }
+
+/* ---------------------------------------------------------------------------
+   2. figure の外枠
+   --------------------------------------------------------------------------- */
+/* .figure / .figure__scroll / .figure__caption の土台は base.css にある。
+   ここでは図固有の見た目と、決定3 のふるまいだけを足す。 */
+
+.figure__title {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-2);
+  font-weight: 700;
+  color: var(--c-accent-strong);
+  line-height: var(--lh-tight);
+}
+
+.figure__scroll {
+  padding: var(--sp-2) 0;
+}
+
+/* 対比型 ─ 横スクロールできることを見せる。
+   1〜2枚目のグラデーション（local）が端の余白、3〜4枚目（scroll）が影。
+   スクロール位置が端に来ると影が消えるので「まだ続きがある」ことだけが見える。 */
+.figure--hold > .figure__scroll {
+  background:
+    linear-gradient(to right, var(--c-bg), transparent) 0 0 / 1.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--c-bg), transparent) 100% 0 / 1.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--c-border-strong), transparent) 0 0 / 0.55rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--c-border-strong), transparent) 100% 0 / 0.55rem 100% no-repeat scroll;
+  scrollbar-width: thin;
+}
+.figure--hold > .figure__scroll:focus-visible {
+  outline: 3px solid var(--c-gold);
+  outline-offset: 2px;
+}
+
+/* 「横にスクロールできます」の案内。
+   ★ opacity ではなく display で出し入れする（max-width の中の opacity が
+     効かない事例に遭遇した経緯があるため。code.css の同じ注意書きと同趣旨）。 */
+.figure__hint {
+  display: none;
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+
+.figure__caption { text-align: left; }
+
+/* ---------------------------------------------------------------------------
+   3. 入れ子にした図を無害にする
+   ---------------------------------------------------------------------------
+   部品は単体で使っても compare の中に入れても同じ書き方でよい、という約束のため、
+   どの部品も完全な <figure> を出す。入れ子になった内側の figure は
+   「外枠だけ消えて中身が残る」ようにする。
+   --------------------------------------------------------------------------- */
+.figure .figure {
+  margin: 0;
+  width: auto;
+}
+.figure .figure + .figure { margin-top: var(--sp-3); }
+.figure .figure > .figure__scroll {
+  overflow: visible;      /* スクロールは一番外側の figure だけが担当する */
+  padding: 0;
+  background: none;
+}
+/* 内側の図の案内文は出さない（スクロールを担当するのは一番外側だけ）。
+   ★セレクタは「figure の中の figure の直下」に限る。
+     .figure .figure__hint と書くと、自分自身の案内文まで消えてしまう。 */
+.figure .figure > .figure__hint { display: none !important; }
+.figure .figure > .figure__caption {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-1);
+}
+
+/* ---------------------------------------------------------------------------
+   4. 本文幅より広く出す（wide）
+   ---------------------------------------------------------------------------
+   901px 以上でだけ左右にはみ出す。はみ出し量 48px は、
+   viewport 901px のとき本文（736px）の左右に 58px の余白がある計算から決めた
+   （48 < 58 なので、どの幅でもページ全体が横スクロールしない）。
+   900px 以下ではそもそも余白が無いので、はみ出させない。
+   --------------------------------------------------------------------------- */
+@media (min-width: 901px) {
+  .figure--wide { margin-left: calc(var(--sp-7) * -1); margin-right: calc(var(--sp-7) * -1); }
+  .figure .figure--wide { margin-left: 0; margin-right: 0; }
+}
+
+/* ---------------------------------------------------------------------------
+   5. ★決定3 の本体 ── 横に並ぶ箱の畳み方
+   --------------------------------------------------------------------------- */
+.fig-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+.fig-row--wrap { flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  /* 非対比型は縦積み */
+  .figure--stack .fig-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* 対比型は横並びを維持（この宣言を後に置いて、入れ子の内側にも勝たせる） */
+  .figure--hold .fig-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+  /* 案内を出すのは対比型だけ */
+  .figure--hold > .figure__hint { display: block; }
+}
+
+/* ---------------------------------------------------------------------------
+   6. 凡例（★色分けを使う図には必ず付ける）
+   --------------------------------------------------------------------------- */
+.fig-legend {
+  list-style: none;
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-sub);
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+.fig-legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+}
+.fig-legend__swatch {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  border: 2px solid var(--t-bd);
+  border-radius: var(--radius-s);
+  background: var(--t-bg);
+}
+
+/* ---------------------------------------------------------------------------
+   7. 小物 ── ✕バッジ／矢印／コード片
+   --------------------------------------------------------------------------- */
+.fig-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 var(--sp-1);
+  margin-left: var(--sp-1);
+  border-radius: 999px;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+}
+.fig-mark--x    { background: var(--c-danger); color: var(--c-bg-raised); }
+.fig-mark--o    { background: var(--c-ok); color: var(--c-bg-raised); }
+.fig-mark--stop {
+  background: var(--c-danger);
+  color: var(--c-bg-raised);
+  border-radius: var(--radius-s);
+  letter-spacing: 0.06em;
+  padding: 0 var(--sp-2);
+}
+.fig-mark--q    { background: var(--c-bg-sub); color: var(--c-text-mute); border: 1px solid var(--c-border-strong); }
+.fig-mark--new  { background: var(--c-gold); color: var(--c-bg-raised); border-radius: var(--radius-s); padding: 0 var(--sp-2); }
+.fig-mark--bang { background: var(--c-gold); color: var(--c-bg-raised); }
+
+/* 矢印。線は border で引くので、向きを変えても位置がずれない */
+.fig-arrow {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-width: 3.5rem;
+  color: var(--t-fg, var(--c-text-mute));
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+  text-align: center;
+}
+.fig-arrow__label { color: var(--c-text-mute); }
+.fig-arrow[data-tone] .fig-arrow__label { color: var(--t-fg); }
+.fig-arrow__line {
+  display: block;
+  width: 100%;
+  min-width: 2.5rem;
+  height: 0;
+  position: relative;
+  border-top: var(--fig-line) solid currentColor;
+}
+.fig-arrow__line::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0.35rem solid transparent;
+  border-left-color: currentColor;
+  border-right: 0;
+}
+.fig-arrow--down .fig-arrow__line {
+  width: 0;
+  min-width: 0;
+  height: 1.75rem;
+  border-top: 0;
+  border-left: var(--fig-line) solid currentColor;
+}
+.fig-arrow--down .fig-arrow__line::after {
+  right: auto;
+  left: 50%;
+  top: auto;
+  bottom: 0;
+  transform: translateX(-50%);
+  border-left-color: transparent;
+  border-top-color: currentColor;
+  border-bottom: 0;
+}
+.fig-arrow--left .fig-arrow__line::after {
+  right: auto;
+  left: 0;
+  border-left-color: transparent;
+  border-right-color: currentColor;
+  border-left: 0;
+  border-right-width: 0.35rem;
+}
+.fig-arrow[data-tone="danger"] { color: var(--c-danger); }
+.fig-arrow[data-tone="action"] { color: var(--c-action); }
+
+/* 図の中で使うコード片。コードブロックの配色とは混ぜない（別クラス・明るい地） */
+.fig-ct {
+  font-family: var(--font-code);
+  font-size: 0.925em;
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--t-bd, var(--c-border));
+  background: var(--t-bg, var(--c-bg-sub));
+  color: var(--t-fg, var(--c-text));
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   8. 立ち絵の枠
+   ---------------------------------------------------------------------------
+   ★画像がまだ無くても図が崩れないように、枠の寸法を CSS で固定する。
+     画像が読めない場合は alt の文字だけが枠の中に出る。
+   --------------------------------------------------------------------------- */
+.fig-chara {
+  display: block;
+  flex: 0 0 auto;
+  width: var(--fig-chara-m);
+  height: var(--fig-chara-m);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--radius-m);
+  background: var(--c-bg-sub);
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+  color: var(--c-text-mute);
+  text-align: center;
+}
+.fig-chara--s { width: var(--fig-chara-s); height: var(--fig-chara-s); }
+.fig-chara--l { width: var(--fig-chara-l); height: var(--fig-chara-l); }
+.fig-chara picture { display: block; width: 100%; height: 100%; }
+.fig-chara img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* 立ち絵は白背景の版もありうるので、枠の地と同じ色を敷いておく */
+  background: transparent;
+}
+.fig-chara[data-dim="true"] img { filter: grayscale(1); opacity: 0.45; }
+
+/* ---------------------------------------------------------------------------
+   9. カード（キャラ1体＋ステータス）── 最も広く使われる基礎部品
+   --------------------------------------------------------------------------- */
+.fig-cards { align-items: flex-start; }
+
+.fig-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--fig-card-w);
+  min-width: var(--fig-card-w);
+  padding: var(--sp-3) var(--sp-2);
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+  box-shadow: var(--shadow-s);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+.fig-card--s { width: var(--fig-card-w-s); min-width: var(--fig-card-w-s); padding: var(--sp-2) var(--sp-1); }
+.fig-card.is-dim { background: var(--c-bg-sub); border-color: var(--c-border); color: var(--c-text-mute); }
+.fig-card.is-empty {
+  border-style: dashed;
+  background: var(--c-bg-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5rem;
+}
+.fig-card__hole { font-size: var(--fs-5); color: var(--c-text-mute); }
+.fig-card__name { margin: var(--sp-2) 0 0; font-weight: 700; font-size: var(--fs-2); }
+.fig-card__role { margin: 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-card__stats {
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--sp-1);
+  font-size: var(--fs-1);
+  text-align: left;
+}
+.fig-card__stat { display: flex; justify-content: space-between; gap: var(--sp-2); }
+.fig-card__k { color: var(--c-text-mute); }
+.fig-card__v { font-variant-numeric: tabular-nums; }
+.fig-card__note { margin: var(--sp-2) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-card__badge {
+  /* 右にはみ出させない（はみ出すと縦積みのときに図が横スクロールしてしまう）。
+     上へのはみ出しは .figure__scroll の縦余白（--sp-2）で受けている。 */
+  position: absolute;
+  top: calc(var(--sp-2) * -1);
+  right: var(--sp-1);
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  background: var(--c-gold);
+  color: var(--c-bg-raised);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  line-height: 1.6;
+}
+.fig-card__mark { position: absolute; top: var(--sp-1); left: var(--sp-1); }
+/* 縦積みになったときは、カードが横いっぱいに伸びてよい */
+@media (max-width: 640px) {
+  .figure--stack .fig-cards .fig-card { width: auto; min-width: 0; }
+  .figure--hold .fig-cards .fig-card { width: var(--fig-card-w); min-width: var(--fig-card-w); }
+}
+/* compare に cols を指定したとき、両側の列幅をそろえる（上下対比で列がそろう） */
+.fig-compare[style*="--fig-cols"] .fig-cards,
+.fig-compare[style*="--fig-cols"] .fig-list__frame {
+  display: grid;
+  grid-template-columns: repeat(var(--fig-cols), minmax(0, 1fr));
+}
+.fig-compare[style*="--fig-cols"] .fig-card { width: auto; min-width: 0; }
+
+/* 値のバー（HPバー）。同じ部品で「突き抜ける／0で止まる」を作れる */
+.fig-bar { margin-top: var(--sp-2); font-size: var(--fs-1); }
+.fig-bar__head { display: flex; justify-content: space-between; gap: var(--sp-2); color: var(--c-text-mute); }
+.fig-bar__num { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--c-text); }
+.fig-bar__track {
+  position: relative;
+  height: 0.6rem;
+  margin-top: var(--sp-1);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 999px;
+  background: var(--c-bg-sub);
+  overflow: visible;
+}
+.fig-bar__fill { height: 100%; border-radius: 999px; background: var(--c-ok); }
+.fig-bar[data-state="stop"] .fig-bar__fill { background: var(--c-gold); }
+.fig-bar[data-state="over"] .fig-bar__fill { background: var(--c-danger); }
+.fig-bar__over {
+  position: absolute;
+  left: calc(var(--sp-4) * -1);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--c-danger);
+  font-size: var(--fs-1);
+}
+
+/* ---------------------------------------------------------------------------
+   10. クラス枠（箱＋情報の段／動作の段）
+   --------------------------------------------------------------------------- */
+.fig-classes { align-items: flex-start; }
+
+.fig-class {
+  flex: 1 1 0;
+  min-width: 11rem;
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+  box-shadow: var(--shadow-s);
+  overflow: hidden;
+}
+.fig-class__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--c-accent-soft);
+  border-bottom: 1px solid var(--c-border-strong);
+  line-height: var(--lh-tight);
+}
+.fig-class__name { font-weight: 700; font-family: var(--font-code); color: var(--c-accent-strong); }
+.fig-class__stereo { font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-class__note { font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-class__chara { padding: var(--sp-2) 0 0; }
+.fig-class__sec { padding: var(--sp-2) var(--sp-3); }
+.fig-class__sec + .fig-class__sec { border-top: 1px dashed var(--c-border-strong); }
+.fig-class__sec-label {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  color: var(--t-fg);
+  letter-spacing: 0.04em;
+}
+.fig-class__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.fig-class__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--t-bd);
+  border-radius: var(--radius-s);
+  background: var(--t-bg);
+  font-family: var(--font-code);
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+.fig-class__access { color: var(--c-text-mute); }
+.fig-class__inote { font-family: var(--font-body); color: var(--c-text-mute); margin-left: auto; }
+.fig-class__foot {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--c-border);
+  background: var(--c-bg-sub);
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+}
+
+/* ---------------------------------------------------------------------------
+   11. カプセル図（枠線にまたがる窓口）── 第3回の中心
+   --------------------------------------------------------------------------- */
+.fig-capsule { align-items: center; }
+.fig-capsule__outside {
+  flex: 0 0 auto;
+  text-align: center;
+  padding: var(--sp-2);
+  border: 1px dashed var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-sub);
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+  line-height: var(--lh-tight);
+}
+.fig-capsule__olabel { margin: var(--sp-1) 0 0; }
+
+/* 窓口が枠線にまたがる形は「殻」と「窓口」を横に並べ、
+   窓口を自分の幅の半分だけ左に引き戻して作る。高さが変わってもずれない。 */
+.fig-capsule__unit { flex: 1 1 auto; align-items: center; min-width: 0; }
+.fig-capsule__shell {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  padding-right: calc(var(--fig-gate-w) / 2 + var(--sp-3));
+  border: var(--fig-line) solid var(--c-accent);
+  border-radius: var(--radius-l);
+  background: var(--t-bg, var(--c-bg-raised));
+  box-shadow: inset 0 0 0 4px var(--c-bg-raised), var(--shadow-s);
+}
+.fig-capsule__name {
+  margin: 0;
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--c-accent-strong);
+  line-height: var(--lh-tight);
+}
+.fig-capsule__note { margin-left: var(--sp-2); font-family: var(--font-body); font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-capsule__ilabel,
+.fig-capsule__glabel {
+  margin: var(--sp-3) 0 var(--sp-1);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--c-info);
+}
+.fig-capsule__glabel { color: var(--c-action); text-align: center; }
+.fig-capsule__inside { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.fig-capsule__field {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--t-bd);
+  border-radius: var(--radius-s);
+  background: var(--t-bg);
+  font-family: var(--font-code);
+  font-size: var(--fs-1);
+}
+.fig-capsule__lock { font-family: var(--font-body); }
+.fig-capsule__fval { margin-left: auto; font-weight: 700; }
+.fig-capsule__chara { margin-top: var(--sp-2); }
+
+.fig-capsule__gatewrap {
+  flex: 0 0 auto;
+  width: var(--fig-gate-w);
+  margin-left: calc(var(--fig-gate-w) / -2);
+  z-index: 2;
+}
+.fig-capsule__gates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.fig-capsule__gate {
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--fig-line) solid var(--t-bd);
+  border-radius: 999px;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  box-shadow: var(--shadow-s);
+  font-family: var(--font-code);
+  font-size: var(--fs-1);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+/* 窓口を通らず中身に届いてしまう図 */
+.fig-capsule__unit.is-direct .fig-capsule__shell { border-color: var(--c-danger-border); }
+
+@media (max-width: 640px) {
+  /* 縦積みになったら、窓口は殻の「下の枠線」にまたがらせる */
+  .figure--stack .fig-capsule__unit { align-items: stretch; }
+  .figure--stack .fig-capsule__shell { padding-right: var(--sp-4); padding-bottom: var(--sp-6); }
+  .figure--stack .fig-capsule__gatewrap {
+    width: auto;
+    margin-left: var(--sp-4);
+    margin-right: var(--sp-4);
+    margin-top: calc(var(--sp-5) * -1);
+  }
+  .figure--stack .fig-capsule__gates { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+}
+
+/* ---------------------------------------------------------------------------
+   12. 付箋（黄＝情報／青＝動作）。散乱と整列
+   --------------------------------------------------------------------------- */
+.fig-notes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.fig-note {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  max-width: 12rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--t-bd);
+  border-bottom-width: 3px;
+  border-radius: var(--radius-s);
+  background: var(--t-bg);
+  color: var(--c-text);
+  box-shadow: var(--shadow-s);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+  text-align: center;
+}
+.fig-note__sub { display: block; font-size: var(--fs-1); color: var(--c-text-mute); }
+/* 散乱状態。回転量は固定の表を引いているので、ビルドしても見た目が変わらない */
+.fig-notes--scatter { padding: var(--sp-4) var(--sp-2); gap: var(--sp-4) var(--sp-3); }
+.fig-notes--scatter .fig-note {
+  transform: rotate(var(--rot, 0deg));
+  margin-top: calc(var(--sp-2) * var(--dx, 0));
+}
+
+/* ---------------------------------------------------------------------------
+   13. リストの列（横一列＋インデックス番号）
+   --------------------------------------------------------------------------- */
+.fig-list__type {
+  margin: 0 0 var(--sp-2);
+  display: inline-block;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-strong);
+  font-family: var(--font-code);
+  font-size: var(--fs-1);
+  line-height: 1.8;
+}
+.fig-list__frame {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  width: max-content;
+  min-width: 100%;
+  padding: var(--sp-3);
+  border: var(--fig-line) solid var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-sub);
+}
+.fig-list[data-fixed="true"] .fig-list__frame { border-color: var(--c-accent); }
+.fig-list__cell { flex: 0 0 auto; text-align: center; }
+.fig-list__idx {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-mute);
+}
+.fig-list__cnote { display: block; margin-top: var(--sp-1); font-size: var(--fs-1); color: var(--c-action); }
+.fig-list__plus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-width: var(--fig-card-w-s);
+  min-height: 5rem;
+  padding: var(--sp-2);
+  border: var(--fig-line) dashed var(--c-border-strong);
+  border-radius: var(--radius-m);
+  color: var(--c-text-mute);
+  font-size: var(--fs-5);
+  line-height: 1;
+}
+.fig-list__plus span { font-size: var(--fs-1); line-height: var(--lh-tight); }
+.fig-list__note { margin: var(--sp-2) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+
+/* ---------------------------------------------------------------------------
+   14. 分岐グリッド（継承ツリー／1入力→N出力 の共通土台）
+   ---------------------------------------------------------------------------
+   横棒と縦棒を子ごとのセルに分けて描くので、子の数や幅が変わってもズレない。
+   連結セルと子の行が同じ列数・同じ gap なので、線は必ず子の中心に来る。
+   --------------------------------------------------------------------------- */
+.fig-branch { display: flex; flex-direction: column; }
+.fig-branch__label {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-code);
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+  line-height: var(--lh-tight);
+}
+.fig-branch__stem {
+  display: block;
+  width: 0;
+  height: var(--sp-4);
+  margin: 0 auto;
+  border-left: var(--fig-line) solid var(--c-border-strong);
+}
+.fig-branch__conns {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 1), minmax(0, 1fr));
+  gap: var(--sp-3);
+  height: var(--sp-5);
+}
+.fig-branch__conn { position: relative; }
+.fig-branch__conn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: 0;
+  border-top: var(--fig-line) solid var(--c-border-strong);
+}
+.fig-branch__conn[data-pos="first"]::before { left: 50%; right: calc(var(--sp-3) * -1); }
+.fig-branch__conn[data-pos="mid"]::before   { left: calc(var(--sp-3) * -1); right: calc(var(--sp-3) * -1); }
+.fig-branch__conn[data-pos="last"]::before  { left: calc(var(--sp-3) * -1); right: 50%; }
+.fig-branch__conn[data-pos="only"]::before  { display: none; }
+.fig-branch__conn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: var(--fig-line) solid var(--c-border-strong);
+}
+.fig-branch[data-edge="dashed"] .fig-branch__conn::before,
+.fig-branch[data-edge="dashed"] .fig-branch__conn::after { border-style: dashed; }
+.fig-branch__row { align-items: flex-start; }
+.fig-branch__child { flex: 1 1 0; min-width: 0; }
+
+@media (max-width: 640px) {
+  /* 縦積みでは「左に幹、右に子」の形に切り替える（線の意味を残す） */
+  .figure--stack .fig-branch__conns { display: none; }
+  .figure--stack .fig-branch__stem { margin: 0 0 0 1rem; height: var(--sp-3); }
+  .figure--stack .fig-branch__label { text-align: left; margin-left: 1rem; }
+  .figure--stack .fig-branch__row {
+    margin-left: 1rem;
+    padding-left: var(--sp-5);
+    border-left: var(--fig-line) solid var(--c-border-strong);
+  }
+  .figure--stack .fig-branch__child { position: relative; }
+  .figure--stack .fig-branch__child::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--sp-5) * -1);
+    top: 1.1rem;
+    width: var(--sp-5);
+    border-top: var(--fig-line) solid var(--c-border-strong);
+  }
+}
+
+/* ---- 継承ツリー ---------------------------------------------------------- */
+.fig-tree { display: flex; justify-content: center; }
+.fig-tree__branchwrap { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.fig-tree__node {
+  align-self: center;
+  min-width: 8rem;
+  max-width: 16rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+  box-shadow: var(--shadow-s);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+.fig-tree__name { margin: 0; font-family: var(--font-code); font-weight: 700; color: var(--c-accent-strong); }
+.fig-tree__note { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-tree__members {
+  list-style: none;
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-1) 0 0;
+  border-top: 1px dashed var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-code);
+  font-size: var(--fs-1);
+  text-align: left;
+}
+.fig-tree__members li {
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  border: 1px solid var(--t-bd);
+  background: var(--t-bg);
+  color: var(--c-text);
+}
+/* implements のバッジ（親は1つ・装備はいくつでも） */
+.fig-tree__impl { align-self: center; margin-top: var(--sp-2); text-align: center; }
+.fig-tree__impl-label { margin: 0 0 var(--sp-1); font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-tree__impl ul { list-style: none; margin: 0; padding: 0; justify-content: center; }
+.fig-tree__badge {
+  padding: 0 var(--sp-2);
+  border: 1px dashed var(--t-bd);
+  border-radius: 999px;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font-family: var(--font-code);
+  font-size: var(--fs-1);
+  line-height: 1.9;
+}
+
+/* ---- 1入力→N出力の分岐図（第6回スライド8） ------------------------------ */
+.fig-fanout { display: flex; flex-direction: column; }
+.fig-fanout__in {
+  align-self: center;
+  padding: var(--sp-2) var(--sp-5);
+  border: var(--fig-line) solid var(--t-bd);
+  border-radius: 999px;
+  background: var(--t-bg);
+  box-shadow: var(--shadow-m);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+.fig-fanout__btn { font-family: var(--font-code); font-weight: 700; color: var(--t-fg); }
+.fig-fanout__sub { display: block; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-fanout__out {
+  padding: var(--sp-2);
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+.fig-fanout__name { margin: 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-fanout__msg { margin: var(--sp-1) 0 0; font-weight: 700; font-size: var(--fs-2); }
+.fig-fanout__osub { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-fanout__note { margin: var(--sp-3) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); text-align: center; }
+
+/* ---------------------------------------------------------------------------
+   15. まとめ3ステップ／流れ・ループ
+   --------------------------------------------------------------------------- */
+.fig-steps { list-style: none; margin: 0; padding: 0; align-items: stretch; }
+.fig-step {
+  flex: 1 1 0;
+  min-width: 10rem;
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+  box-shadow: var(--shadow-s);
+  line-height: var(--lh-tight);
+}
+.fig-step__no {
+  flex: 0 0 auto;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-bg-raised);
+  font-weight: 700;
+  font-size: var(--fs-2);
+}
+.fig-step__body { min-width: 0; }
+.fig-step__t { margin: 0; font-weight: 700; font-size: var(--fs-2); }
+.fig-step__d { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+
+.fig-flow__line { align-items: center; }
+.fig-flow__item {
+  flex: 0 0 auto;
+  min-width: 7rem;
+  max-width: 13rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+  box-shadow: var(--shadow-s);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+.fig-flow__t { margin: 0; font-weight: 700; font-size: var(--fs-2); }
+.fig-flow__d { margin: var(--sp-1) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-flow__loop {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px dashed var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-sub);
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+  line-height: var(--lh-tight);
+}
+
+/* ---------------------------------------------------------------------------
+   16. 並行配列＋添字の対応（第1回 図D。横並びが本質なので常に横スクロール）
+   --------------------------------------------------------------------------- */
+.fig-parallel { display: flex; gap: var(--sp-2); align-items: flex-start; width: max-content; min-width: 100%; }
+.fig-parallel__labels {
+  display: grid;
+  grid-auto-rows: var(--fig-cell-h);
+  gap: var(--sp-1);
+  text-align: right;
+  font-size: var(--fs-1);
+  flex: 0 0 auto;
+}
+.fig-parallel__lh { display: flex; align-items: center; justify-content: flex-end; color: var(--c-text-mute); }
+.fig-parallel__label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--c-accent-strong);
+  white-space: nowrap;
+}
+.fig-parallel__cols { display: flex; gap: var(--sp-2); }
+.fig-parallel__col {
+  position: relative;
+  display: grid;
+  grid-auto-rows: var(--fig-cell-h);
+  gap: var(--sp-1);
+  min-width: 5.25rem;
+}
+/* 添字の対応線。セルの地が不透明なので、線はセルの隙間だけに見える */
+.fig-parallel--link .fig-parallel__col::before {
+  content: "";
+  position: absolute;
+  top: var(--fig-cell-h);
+  bottom: 0;
+  left: 50%;
+  border-left: var(--fig-line) dotted var(--c-info-border);
+  z-index: 0;
+}
+.fig-parallel__idx {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-s);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-strong);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.fig-parallel__cell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-s);
+  background: var(--t-bg, var(--c-bg-raised));
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+}
+.fig-parallel__cell.is-bad {
+  border-color: var(--c-danger-border);
+  background: var(--c-danger-bg);
+  color: var(--c-danger);
+  font-weight: 700;
+}
+.fig-parallel__cnote {
+  position: relative;
+  z-index: 1;
+  font-size: var(--fs-1);
+  color: var(--c-danger);
+  text-align: center;
+  line-height: var(--lh-tight);
+}
+
+/* ---------------------------------------------------------------------------
+   17. 左右対比（Before/After）── 対比型の中心。区切りラベルは常に残す
+   --------------------------------------------------------------------------- */
+.fig-compare { align-items: stretch; }
+.fig-compare--h { width: max-content; min-width: 100%; }
+.fig-compare--v { display: flex; flex-direction: column; width: max-content; min-width: 100%; gap: var(--sp-3); }
+
+.fig-panel {
+  position: relative;          /* 区切りラベルの位置決めのため */
+  flex: 1 1 0;
+  min-width: 15rem;
+  display: flex;
+  flex-direction: column;
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+}
+.fig-panel__label {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--t-bd, var(--c-border));
+  background: var(--c-bg-sub);
+  color: var(--t-fg, var(--c-accent-strong));
+  font-weight: 700;
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+.fig-panel__sub { display: block; font-weight: 400; font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-panel__body { padding: var(--sp-3); }
+.fig-panel__body > * + * { margin-top: var(--sp-3); }
+.fig-panel__note {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px dashed var(--c-border-strong);
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+  line-height: var(--lh-tight);
+}
+
+/* 区切りラベル（VS / Before→After）。★スマホでも必ず残す（決定3）
+   文字はショートコードが --fig-vs:'VS' の形で渡す。
+   （擬似要素は親の属性を読めないが、カスタムプロパティなら content で使える） */
+.fig-compare:not(.is-novs) > .fig-panel + .fig-panel::before {
+  content: var(--fig-vs, "VS");
+  position: absolute;
+  z-index: 3;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: 999px;
+  border: var(--fig-line) solid var(--c-gold);
+  background: var(--c-gold-soft);
+  color: var(--c-gold);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--fs-2);
+  letter-spacing: 0.06em;
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+}
+/* 左右対比 ─ 2枚目の左側の余白に置く */
+.fig-compare--h:not(.is-novs) > .fig-panel + .fig-panel { margin-left: var(--sp-7); }
+.fig-compare--h:not(.is-novs) > .fig-panel + .fig-panel::before {
+  left: calc(var(--sp-7) * -0.5);
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+/* 上下対比 ─ 2枚目の上の余白に置く（列がそろうので8体の図でも対応が追える） */
+.fig-compare--v:not(.is-novs) > .fig-panel + .fig-panel { margin-top: var(--sp-6); }
+.fig-compare--v:not(.is-novs) > .fig-panel + .fig-panel::before {
+  left: var(--sp-5);
+  top: calc(var(--sp-6) * -0.5);
+  transform: translateY(-50%);
+}
+
+/* コード↔出力の2列。左右の幅は内容にまかせる */
+.fig-compare--codeout > .fig-panel { min-width: 17rem; }
+
+@media (max-width: 640px) {
+  /* 対比型は横並びのまま幅を詰める（畳まない） */
+  .figure--hold .fig-panel { min-width: 13.5rem; }
+  .figure--hold .fig-compare--codeout > .fig-panel { min-width: 15rem; }
+}
+
+/* ---------------------------------------------------------------------------
+   18. ラベル付きの箱（入れ子にできる汎用部品）
+   ---------------------------------------------------------------------------
+   「型（入口）の箱の中に実体（中身）が入っている」入れ子図、
+   リスト枠、機械の箱など、11種に無い形はこれを組み合わせて作る。
+   --------------------------------------------------------------------------- */
+.fig-box {
+  padding: var(--sp-3);
+  border: var(--fig-line) solid var(--t-bd, var(--c-border-strong));
+  border-radius: var(--radius-m);
+  background: var(--t-bg, var(--c-bg-raised));
+}
+.fig-box__label {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-code);
+  font-weight: 700;
+  font-size: var(--fs-2);
+  color: var(--t-fg, var(--c-accent-strong));
+  line-height: var(--lh-tight);
+}
+.fig-box__sub { margin: calc(var(--sp-2) * -1) 0 var(--sp-2); font-size: var(--fs-1); color: var(--c-text-mute); }
+.fig-box__body > * + * { margin-top: var(--sp-3); }
+.fig-box__note { margin: var(--sp-2) 0 0; font-size: var(--fs-1); color: var(--c-text-mute); line-height: var(--lh-tight); }
+.fig-box .fig-box { box-shadow: var(--shadow-s); }
+
+/* ---------------------------------------------------------------------------
+   19. コード1行の中を指す図（第2回 図D）
+   ---------------------------------------------------------------------------
+   Prism の行強調では1行の中の左右を色分けできないので、この1行だけ別枠にする。
+   ★コードブロック（暗色）とは見た目をはっきり分ける（明るい地・枠線つき）。
+   --------------------------------------------------------------------------- */
+.fig-codeline {
+  padding: var(--sp-4);
+  border: var(--fig-line) solid var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-raised);
+}
+.fig-codeline__line {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: var(--fs-4);
+  line-height: 2;
+  text-align: center;
+  word-break: break-word;
+}
+.fig-codeline__notes {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-3) 0 0;
+  border-top: 1px dashed var(--c-border-strong);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  font-size: var(--fs-1);
+}
+.fig-codeline__note { display: flex; align-items: center; gap: var(--sp-2); color: var(--t-fg, var(--c-text)); }
+.fig-codeline__swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+  border: 2px solid var(--t-bd);
+  border-radius: var(--radius-s);
+  background: var(--t-bg);
+}
+
+/* ---------------------------------------------------------------------------
+   20. コードブロックとの同居
+   ---------------------------------------------------------------------------
+   ★大域的な pre / code / .codeblock の指定はしない。
+     図の内側（.figure の中）に置かれたコードブロックの「外側の余白」だけを直す。
+     色・フォント・ハイライトは code.css / prism.css のままにする。
+   --------------------------------------------------------------------------- */
+.figure .codeblock {
+  margin: 0;
+  margin-left: 0;
+  margin-right: 0;
+  border-radius: var(--radius-m);
+}
+.figure .fig-panel__body > .codeblock:only-child { margin: 0; }
+
+/* ---------------------------------------------------------------------------
+   21. 「ページ側の書き方」の枠（見本ページ・説明用）
+   ---------------------------------------------------------------------------
+   ★.codeblock とは別のクラス。コードブロックの配色には触らない。
+   --------------------------------------------------------------------------- */
+.fig-usage {
+  margin: var(--sp-4) 0;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-sub);
+  overflow: hidden;
+}
+.fig-usage__label {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-3);
+  border-bottom: 1px solid var(--c-border-strong);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-strong);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  line-height: 1.8;
+}
+.fig-usage__code {
+  margin: 0;
+  padding: var(--sp-3);
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: var(--fs-2);
+  line-height: 1.7;
+  color: var(--c-text);
+  tab-size: 2;
+}
+
+/* ---------------------------------------------------------------------------
+   22. 印刷
+   --------------------------------------------------------------------------- */
+@media print {
+  .figure__hint { display: none !important; }
+  .figure--hold > .figure__scroll { overflow: visible; background: none; }
+  .fig-notes--scatter .fig-note { transform: none; }
+}

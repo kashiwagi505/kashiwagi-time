@@ -1,0 +1,258 @@
+/* ===========================================================================
+   base.css — リセットと本文タイポグラフィ
+   ---------------------------------------------------------------------------
+   ここには世界観要素を入れない（design-notes.md 0章：
+   「本文の地の文は常に素直な技術文書として表示する」）。
+   =========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-3);
+  line-height: var(--lh-body);
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, ol, dl, figure, pre, blockquote, table {
+  margin: 0;
+}
+
+img, svg, video { max-width: 100%; height: auto; }
+
+/* -- リンク ---------------------------------------------------------------- */
+a { color: var(--c-accent); text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+a:hover { color: var(--c-accent-strong); }
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--c-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+
+/* -- スキップリンク（キーボード操作用） ----------------------------------- */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--c-bg-raised);
+  padding: var(--sp-2) var(--sp-4);
+}
+.skip-link:focus { left: var(--sp-4); }
+
+/* ===========================================================================
+   .prose — Markdown から出てくる本文のスタイル
+   =========================================================================== */
+
+.prose > * + * { margin-top: var(--sp-4); }
+
+.prose h2 {
+  margin-top: var(--sp-7);
+  padding-bottom: var(--sp-2);
+  border-bottom: 2px solid var(--c-accent-soft);
+  color: var(--c-accent-strong);
+  font-size: var(--fs-6);
+  line-height: var(--lh-tight);
+}
+.prose h3 {
+  margin-top: var(--sp-6);
+  color: var(--c-accent-strong);
+  font-size: var(--fs-5);
+  line-height: var(--lh-tight);
+}
+.prose h4 {
+  margin-top: var(--sp-5);
+  color: var(--c-text);
+  font-size: var(--fs-4);
+  line-height: var(--lh-tight);
+}
+
+/* 第1部 / 第2部 の見出し。呼び名は付けてよいが、装飾は控えめに保つ */
+.prose h2.part {
+  margin-top: var(--sp-8);
+  border-bottom-color: var(--c-gold-soft);
+}
+
+.prose ul, .prose ol { padding-left: 1.6em; }
+.prose li + li { margin-top: var(--sp-1); }
+
+.prose strong { font-weight: 700; }
+
+/* 初出用語（用語集を作らない方針のかわりに、本文内で太字＋1行説明する） */
+.prose .term {
+  font-weight: 700;
+  color: var(--c-accent-strong);
+  border-bottom: 2px solid var(--c-gold-soft);
+}
+
+.prose blockquote {
+  padding: var(--sp-3) var(--sp-4);
+  border-left: 4px solid var(--c-accent);
+  background: var(--c-accent-soft);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  color: var(--c-text);
+}
+.prose blockquote > * + * { margin-top: var(--sp-2); }
+
+.prose hr {
+  height: 1px;
+  border: 0;
+  margin: var(--sp-7) 0;
+  background: var(--c-border);
+}
+
+/* -- 表 ------------------------------------------------------------------- */
+/* 既存資料は表が多い。スマホでは表を横スクロールさせる（本文幅は崩さない） */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-2);
+  background: var(--c-bg-raised);
+  /* Markdown の表は .table-scroll で囲み忘れると、641px 以上でも
+     ページ全体を横スクロールさせる（セルの最小幅が本文幅を超えるため）。
+     囲み忘れても事故にならないよう、全幅で横スクロールに逃がしておく。
+     ※ display:block にしても表としての見た目は保たれる。 */
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.prose thead th {
+  background: var(--c-bg-sub);
+  color: var(--c-accent-strong);
+  text-align: left;
+}
+.prose th, .prose td {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  vertical-align: top;
+  line-height: var(--lh-tight);
+}
+/* Markdown の表は自動で .table-scroll に包まれないので、
+   横に長い表は明示的に <div class="table-scroll"> で囲む（README 参照） */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* -- 折りたたみ（解答） --------------------------------------------------- */
+/* 解答は各回ページ内の <details> に入れる（確定事項）。 */
+.prose details {
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-raised);
+  box-shadow: var(--shadow-s);
+}
+.prose details > summary {
+  cursor: pointer;
+  padding: var(--sp-3) var(--sp-4);
+  font-weight: 700;
+  color: var(--c-accent-strong);
+  background: var(--c-bg-sub);
+  border-radius: var(--radius-m);
+  line-height: var(--lh-tight);
+  /* うっかり開かないよう、クリック領域を必要以上に広くしない */
+  display: block;
+}
+.prose details[open] > summary {
+  border-bottom: 1px solid var(--c-border);
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+.prose details > summary:hover { background: var(--c-accent-soft); }
+/* summary 直下から下の中身に余白を付ける */
+.prose details > :not(summary) { margin: var(--sp-4); }
+.prose details > :not(summary) + :not(summary) { margin-top: var(--sp-4); }
+
+/* 印刷時は解答を開かない（配布時に伏せたままにできる）。
+   開いて印刷したい場合はブラウザで開いてから印刷する。 */
+
+/* -- 注意書き・ヒント ----------------------------------------------------- */
+.note {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-m);
+  border-left: 4px solid var(--c-accent);
+  background: var(--c-accent-soft);
+  font-size: var(--fs-2);
+}
+.note--warn   { border-left-color: var(--c-danger); background: var(--c-danger-bg); }
+.note--hint   { border-left-color: var(--c-gold);   background: var(--c-gold-soft); }
+.note--ok     { border-left-color: var(--c-ok);     background: var(--c-ok-bg); }
+.note__title  { display: block; font-weight: 700; margin-bottom: var(--sp-1); }
+
+/* -- バッジ --------------------------------------------------------------- */
+.badge {
+  display: inline-block;
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-bg-raised);
+  color: var(--c-text-mute);
+  font-size: var(--fs-1);
+  line-height: 1.7;
+  white-space: nowrap;
+}
+.badge--project {
+  border-color: var(--c-gold);
+  background: var(--c-gold-soft);
+  color: var(--c-gold);
+  font-weight: 700;
+}
+
+/* ===========================================================================
+   図のコンテナ用の受け皿
+   ---------------------------------------------------------------------------
+   ★実際の図のスタイルは figures.css（別担当）。ここでは
+     「本文幅の外にはみ出す図を許容できる」土台だけ用意しておく（決定3）。
+     - .figure は本文幅より広くしてよい
+     - 対比型の図は横スクロールで逃がせるよう overflow-x を効かせられる
+   base.css / layout.css 側からこれを打ち消さない。
+   =========================================================================== */
+.prose .figure,
+.prose figure.figure {
+  margin-top: var(--sp-6);
+  margin-bottom: var(--sp-6);
+  max-width: none;              /* 本文幅を超えてよい */
+}
+.prose .figure__scroll {
+  overflow-x: auto;             /* 対比型の図はここで横スクロールさせる */
+  -webkit-overflow-scrolling: touch;
+}
+.prose .figure__caption {
+  margin-top: var(--sp-2);
+  color: var(--c-text-mute);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+/* ===========================================================================
+   小さい画面
+   ブレークポイントは 640px / 900px の2段だけ（tokens.css 末尾の取り決め）
+   =========================================================================== */
+@media (max-width: 900px) {
+  .prose h2 { margin-top: var(--sp-6); }
+}
+
+@media (max-width: 640px) {
+  body { font-size: var(--fs-3); line-height: 1.8; }
+  .prose h2 { font-size: var(--fs-5); }
+  .prose h3 { font-size: var(--fs-4); }
+  .prose ul, .prose ol { padding-left: 1.3em; }
+  .prose details > :not(summary) { margin: var(--sp-3); }
+  /* 狭い画面では折り返しも止めて、潰して読めなくしない
+     （display:block と overflow-x は全幅で指定済み） */
+  .prose table { white-space: nowrap; }
+}
+
+@media print {
+  .skip-link, .site-nav, .lesson-nav, .codeblock__copy { display: none !important; }
+  body { background: #fff; }
+}

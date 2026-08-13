@@ -1,0 +1,30 @@
+---
+layout: layouts/base.njk
+bodyClass: page-lesson
+---
+<article class="lesson">
+
+  <header class="lesson__header">
+    <p class="lesson__kicker">
+      <span class="lesson__no">第{{ lesson.order }}回</span>
+      {% if lesson.worldName %}<span class="lesson__world">{{ lesson.worldName }}</span>{% endif %}
+      {% if lesson.project %}<span class="badge badge--project">{{ site.project.shortLabel }}</span>{% endif %}
+    </p>
+    <h1 class="lesson__title">{{ lesson.title }}</h1>
+    {% if lesson.summary %}<p class="lesson__summary">{{ lesson.summary }}</p>{% endif %}
+    {% if lesson.topics %}
+    <ul class="lesson__topics">
+      {%- for t in lesson.topics %}<li>{{ t }}</li>{% endfor -%}
+    </ul>
+    {% endif %}
+  </header>
+
+  {% include "partials/lesson-nav.njk" %}
+
+  <div class="lesson__body prose">
+{{ content | safe }}
+  </div>
+
+  {% include "partials/lesson-nav.njk" %}
+
+</article>

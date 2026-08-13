@@ -1,0 +1,4 @@
+node_modules/
+# QA スクリプトが吐く確認用画像（再生成できるのでコミットしない）
+qa-*.png
+zoom.png

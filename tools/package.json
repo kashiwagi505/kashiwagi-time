@@ -1,0 +1,9 @@
+{
+  "name": "kashiwagi-img-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "画像素材の透過処理・WebP変換スクリプト（サイト本体とは独立）",
+  "dependencies": {
+    "sharp": "^0.34.0"
+  }
+}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{ site.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if title %}{{ title }}｜{{ site.name }}{% else %}{{ site.name }}｜{{ site.tagline }}{% endif %}</title>
+<meta name="description" content="{{ description or site.description }}">
+{#- CSS はすべて相対パス。ルート絶対パスは使わない（GitHub Pages のサブディレクトリ配信対策） -#}
+<link rel="stylesheet" href="{{ 'assets/css/tokens.css' | rel }}">
+<link rel="stylesheet" href="{{ 'assets/css/base.css' | rel }}">
+<link rel="stylesheet" href="{{ 'assets/css/layout.css' | rel }}">
+<link rel="stylesheet" href="{{ 'assets/js/prism.css' | rel }}">
+<link rel="stylesheet" href="{{ 'assets/css/code.css' | rel }}">
+{#- 図解のCSS。図解ショートコード担当が用意する（未作成のあいだは404になるだけでビルドは通る） -#}
+<link rel="stylesheet" href="{{ 'assets/css/figures.css' | rel }}">
+</head>
+<body class="{{ bodyClass or 'page-default' }}">
+<a class="skip-link" href="#main">本文へ移動</a>
+{% include "partials/site-header.njk" %}
+<main class="site-main" id="main">
+{{ content | safe }}
+</main>
+{% include "partials/site-footer.njk" %}
+<script src="{{ 'assets/js/prism.js' | rel }}"></script>
+<script src="{{ 'assets/js/main.js' | rel }}"></script>
+</body>
+</html>
