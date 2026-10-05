@@ -26,3 +26,6 @@ masters/
 # ※ src/assets/js/prism.js と prism.css は「同梱物」なのでコミットする
 #    （node_modules が無い環境でもビルドできるようにするため。
 #     再生成は npm run vendor:prism）
+
+# 紹介動画の作業用ファイル（コマ画像・node_modules など）
+brag-output/work/
