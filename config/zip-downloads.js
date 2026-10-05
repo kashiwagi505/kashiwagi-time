@@ -39,6 +39,14 @@ function dosDateTime(d) {
 
 /** entries: [{ name: "01-class/Student.java", data: Buffer }] */
 function buildZip(entries) {
+  // ZIP64 には対応しない（教材の配布物はずっと小さい）。超えたら壊れた ZIP を作らずに止める
+  if (entries.length > 0xffff) throw new Error("[zip] ファイル数が多すぎます（ZIP64 非対応）");
+  const names = new Set();
+  for (const e of entries) {
+    if (names.has(e.name)) throw new Error(`[zip] 同じ名前のファイルが2つあります: ${e.name}`);
+    names.add(e.name);
+    if (e.data.length >= 0xffffffff) throw new Error(`[zip] ファイルが大きすぎます（ZIP64 非対応）: ${e.name}`);
+  }
   const { time, date } = dosDateTime(new Date(2026, 0, 1, 0, 0, 0));
   const locals = [];
   const centrals = [];
@@ -107,7 +115,8 @@ function listFiles(dir, base = dir) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);
     if (ent.isDirectory()) out.push(...listFiles(p, base));
-    else if (!/^README\.md$/i.test(ent.name)) out.push(path.relative(base, p).split(path.sep).join("/"));
+    // README.md は担当者の作業記録なので配らない。README.txt は ZIP 側で作るので重ならないよう除く
+    else if (!/^README\.(md|txt)$/i.test(ent.name)) out.push(path.relative(base, p).split(path.sep).join("/"));
   }
   return out.sort();
 }

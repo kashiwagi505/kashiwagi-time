@@ -63,8 +63,10 @@ for (const file of htmlFiles) {
       problems.push(`${rel(file)}: ルート絶対パスは使わない → ${url}`);
       continue;
     }
-    const target = cleanPath ? path.resolve(path.dirname(file), decode(cleanPath)) : file;
-    if (!fs.existsSync(target) || fs.statSync(target).isDirectory()) {
+    let target = cleanPath ? path.resolve(path.dirname(file), decode(cleanPath)) : file;
+    // foo/ のようなディレクトリへのリンクは、GitHub Pages では foo/index.html が返る
+    if (fs.existsSync(target) && fs.statSync(target).isDirectory()) target = path.join(target, "index.html");
+    if (!fs.existsSync(target)) {
       problems.push(`${rel(file)}: リンク切れ → ${url}`);
       continue;
     }
@@ -79,7 +81,23 @@ const site = JSON.parse(fs.readFileSync(path.join(root, "src/_data/site.json"), 
 const exercises = require(path.join(root, "src/_data/exercises.js"));
 for (const lesson of site.lessons) {
   const zip = path.join(out, "downloads", `${lesson.slug}.zip`);
-  if (!fs.existsSync(zip)) problems.push(`第${lesson.order}回: 配布 ZIP がない → downloads/${lesson.slug}.zip`);
+  const srcDir = path.join(root, "src/downloads", lesson.slug);
+  if (!fs.existsSync(zip)) {
+    problems.push(`第${lesson.order}回: 配布 ZIP がない → downloads/${lesson.slug}.zip`);
+  } else {
+    try {
+      const names = readZip(fs.readFileSync(zip));
+      const expected = fs.existsSync(srcDir)
+        ? walk(srcDir)
+            .map((p) => `${lesson.slug}/${path.relative(srcDir, p).split(path.sep).join("/")}`)
+            .filter((n) => !/(^|\/)README\.(md|txt)$/i.test(n))
+        : [];
+      for (const n of expected) if (!names.includes(n)) problems.push(`第${lesson.order}回: ZIP に ${n} が入っていない`);
+      if (!names.includes(`${lesson.slug}/README.txt`)) problems.push(`第${lesson.order}回: ZIP に README.txt が入っていない`);
+    } catch (e) {
+      problems.push(`第${lesson.order}回: ZIP が壊れている → ${e.message}`);
+    }
+  }
 
   const steps = exercises[lesson.slug] || [];
   for (const s of steps) {
@@ -90,15 +108,58 @@ for (const lesson of site.lessons) {
     }
   }
   const page = path.join(out, "lessons", `${lesson.slug}.html`);
-  if (fs.existsSync(page)) {
-    const html = fs.readFileSync(page, "utf8");
-    const boxes = new Set([...html.matchAll(/data-ex-box="([^"]+)"/g)].map((m) => m[1]));
-    for (const s of steps) {
-      if (!boxes.has(s.key)) {
-        problems.push(`第${lesson.order}回: ${s.label} の手順ボックスが出ていない（演習の見出しに「${s.label}」が見つからない）`);
-      }
+  if (!fs.existsSync(page)) {
+    problems.push(`第${lesson.order}回: ページが出力されていない → lessons/${lesson.slug}.html`);
+    continue;
+  }
+  const html = fs.readFileSync(page, "utf8");
+  const counts = {};
+  for (const m of html.matchAll(/data-ex-box="([^"]+)"/g)) counts[m[1]] = (counts[m[1]] || 0) + 1;
+  for (const s of steps) {
+    if (!counts[s.key]) {
+      problems.push(`第${lesson.order}回: ${s.label} の手順ボックスが出ていない（演習の見出しに「${s.label}」が見つからない）`);
+    } else if (counts[s.key] > 1) {
+      problems.push(`第${lesson.order}回: ${s.label} の手順ボックスが ${counts[s.key]} 個ある（演習の見出しが重複している）`);
     }
   }
+  const known = new Set(steps.map((s) => s.key));
+  for (const k of Object.keys(counts)) {
+    if (!known.has(k)) problems.push(`第${lesson.order}回: exercises.js に無い問題キー「${k}」の手順ボックスがある`);
+  }
+}
+
+/** ZIP の中央ディレクトリを読み、各ファイルを展開して CRC を確かめる。ファイル名の一覧を返す */
+function readZip(buf) {
+  const zlib = require("node:zlib");
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 0xffff); i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("終端レコードが見つからない");
+  const count = buf.readUInt16LE(eocd + 10);
+  let p = buf.readUInt32LE(eocd + 16);
+  const names = [];
+  for (let n = 0; n < count; n++) {
+    if (buf.readUInt32LE(p) !== 0x02014b50) throw new Error("中央ディレクトリが壊れている");
+    const method = buf.readUInt16LE(p + 10);
+    const crc = buf.readUInt32LE(p + 16);
+    const csize = buf.readUInt32LE(p + 20);
+    const usize = buf.readUInt32LE(p + 24);
+    const nlen = buf.readUInt16LE(p + 28);
+    const xlen = buf.readUInt16LE(p + 30);
+    const clen = buf.readUInt16LE(p + 32);
+    const local = buf.readUInt32LE(p + 42);
+    const name = buf.slice(p + 46, p + 46 + nlen).toString("utf8");
+    if (buf.readUInt32LE(local) !== 0x04034b50) throw new Error(`${name}: ローカルヘッダが壊れている`);
+    const dataAt = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
+    const comp = buf.slice(dataAt, dataAt + csize);
+    const raw = method === 8 ? zlib.inflateRawSync(comp) : comp;
+    if (raw.length !== usize) throw new Error(`${name}: 展開後のサイズが合わない`);
+    if ((zlib.crc32(raw) >>> 0) !== crc) throw new Error(`${name}: CRC が合わない`);
+    names.push(name);
+    p += 46 + nlen + xlen + clen;
+  }
+  return names;
 }
 
 if (problems.length) {

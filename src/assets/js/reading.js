@@ -17,28 +17,61 @@
   var KEY = "kashiwagi-time:progress:v1";
   var storageOk = true;
 
-  function load() {
+  function isObj(x) { return !!x && typeof x === "object" && !Array.isArray(x); }
+
+  /** 保存データの形を確かめて、使える部分だけを取り出す（壊れていても JS 全体を止めない） */
+  function normalize(raw) {
+    var out = { v: 1, lessons: {}, last: null };
+    if (!isObj(raw) || !isObj(raw.lessons)) return out;
+    for (var slug in raw.lessons) {
+      if (!Object.prototype.hasOwnProperty.call(raw.lessons, slug)) continue;
+      var r = raw.lessons[slug];
+      if (!isObj(r)) continue;
+      var rec = { done: r.done === true, ex: {} };
+      if (typeof r.seen === "number") rec.seen = r.seen;
+      if (isObj(r.ex)) {
+        for (var k in r.ex) if (Object.prototype.hasOwnProperty.call(r.ex, k) && r.ex[k] === true) rec.ex[k] = true;
+      }
+      out.lessons[slug] = rec;
+    }
+    var l = raw.last;
+    if (isObj(l) && typeof l.slug === "string") {
+      out.last = {
+        slug: l.slug,
+        order: Number(l.order) || 0,
+        title: typeof l.title === "string" ? l.title : "",
+        id: typeof l.id === "string" ? l.id : "",
+        section: typeof l.section === "string" ? l.section : "",
+        ts: Number(l.ts) || 0,
+      };
+    }
+    return out;
+  }
+  function read() {
     try {
       var raw = window.localStorage.getItem(KEY);
-      var data = raw ? JSON.parse(raw) : null;
-      if (data && typeof data === "object" && data.lessons) return data;
+      return normalize(raw ? JSON.parse(raw) : null);
     } catch (e) {
       storageOk = false;
+      return null;
     }
-    return { v: 1, lessons: {}, last: null };
   }
-  function save(data) {
+
+  // ★メモリ上の state を正とする。保存できない環境でも、そのページを開いている間は記録が効く
+  var state = read() || normalize(null);
+  function load() { return state; }
+  function save() {
     try {
-      window.localStorage.setItem(KEY, JSON.stringify(data));
+      window.localStorage.setItem(KEY, JSON.stringify(state));
       return true;
     } catch (e) {
       storageOk = false;
+      showStorageError();
       return false;
     }
   }
   function lessonRec(data, slug) {
     if (!data.lessons[slug]) data.lessons[slug] = { done: false, ex: {} };
-    if (!data.lessons[slug].ex) data.lessons[slug].ex = {};
     return data.lessons[slug];
   }
   function countEx(rec, keys) {
@@ -91,6 +124,8 @@
       regions[i].addEventListener("scroll", update, { passive: true });
     }
     window.addEventListener("resize", update);
+    // 閉じた解答の中の表は、開くまで幅が測れないので開いたときに測り直す
+    document.addEventListener("toggle", update, true);
     update();
   }
 
@@ -109,7 +144,7 @@
     if (!data.last || data.last.slug !== slug) {
       data.last = { slug: slug, order: Number(order), title: title, id: "", section: "", ts: Date.now() };
     }
-    save(data);
+    save();
     if (!storageOk) showStorageError();
 
     // ---- 問ごとの「できた」と、回の進み具合
@@ -154,11 +189,9 @@
     }
     function onCheck(ev) {
       var k = ev.target.getAttribute("data-ex-check");
-      data = load();
-      rec = lessonRec(data, slug);
       if (ev.target.checked) rec.ex[k] = true;
       else delete rec.ex[k];
-      if (!save(data)) showStorageError();
+      save();
       render();
     }
     for (var i = 0; i < checks.length; i++) {
@@ -168,10 +201,8 @@
     }
     if (completeBtn) {
       completeBtn.addEventListener("click", function () {
-        data = load();
-        rec = lessonRec(data, slug);
         rec.done = !rec.done;
-        if (!save(data)) showStorageError();
+        save();
         render();
       });
     }
@@ -247,7 +278,15 @@
 
       toggle.addEventListener("click", function () { setOpen(panel.hidden); });
       panel.addEventListener("click", function (ev) {
-        if (ev.target.closest("a")) setOpen(false);
+        var a = ev.target.closest("a");
+        if (!a) return;
+        setOpen(false);
+        // パネルは閉じて見えなくなるので、キーボードの位置を移動先の見出しに移す
+        var target = document.getElementById(idOf(a));
+        if (target) {
+          if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+          window.setTimeout(function () { target.focus({ preventScroll: true }); }, 0);
+        }
       });
       document.addEventListener("keydown", function (ev) {
         if (ev.key === "Escape" && !panel.hidden) {
@@ -297,6 +336,9 @@
       if (bar) {
         var past = header.getBoundingClientRect().bottom < 0;
         bar.classList.toggle("is-visible", past);
+        // 画面の外にいる間は、Tab で見えないボタンに移らないようにする
+        if (past) bar.removeAttribute("inert");
+        else bar.setAttribute("inert", "");
         if (!past && panel && !panel.hidden) setOpen(false);
         var doc = document.documentElement;
         var max = doc.scrollHeight - window.innerHeight;
@@ -306,9 +348,8 @@
       var now = Date.now();
       if (found && now - lastSaved > 2000) {
         lastSaved = now;
-        var d = load();
-        d.last = { slug: slug, order: Number(order), title: title, id: found.id, section: found.text, ts: now };
-        save(d);
+        state.last = { slug: slug, order: Number(order), title: title, id: found.id, section: found.text, ts: now };
+        save();
       }
     }
     window.addEventListener("scroll", function () {
@@ -337,8 +378,8 @@
       var slug = card.getAttribute("data-lesson-card");
       var total = Number(card.getAttribute("data-ex-total")) || 0;
       var rec = data.lessons[slug];
-      var n = rec && rec.ex ? Object.keys(rec.ex).length : 0;
-      if (n > total) n = total;
+      var cardKeys = (card.getAttribute("data-ex-keys") || "").split(" ").filter(Boolean);
+      var n = countEx(rec, cardKeys);
       exTotal += total;
       exDone += n;
       var status = card.querySelector("[data-lesson-status]");
@@ -373,6 +414,7 @@
       panel.querySelector("[data-progress-reset]").onclick = function () {
         if (!window.confirm("このブラウザに保存した進み具合（完了・できた・続きの位置）をすべて消します。よろしいですか？")) return;
         try { window.localStorage.removeItem(KEY); } catch (e) { /* 消せない環境では何もしない */ }
+        state = normalize(null);
         setupHome();
       };
     }

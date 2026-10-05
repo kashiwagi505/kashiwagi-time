@@ -21,7 +21,7 @@
   {%- for item in g.items -%}
   {%- set l = item.data.lesson -%}
   {%- set steps = exercises[l.slug] or [] %}
-    <li class="lesson-card" data-lesson-card="{{ l.slug }}" data-ex-total="{{ steps.length }}">
+    <li class="lesson-card" data-lesson-card="{{ l.slug }}" data-ex-total="{{ steps.length }}" data-ex-keys="{% for st in steps %}{{ st.key }}{% if not loop.last %} {% endif %}{% endfor %}">
       <span class="lesson-card__no" aria-hidden="true">{{ l.order }}</span>
       <div class="lesson-card__main">
         <p class="lesson-card__kicker">第{{ l.order }}回{% if l.worldName %}<span class="lesson-card__world">{{ l.worldName }}</span>{% endif %}</p>

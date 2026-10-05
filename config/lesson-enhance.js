@@ -45,14 +45,16 @@ function slugify(text) {
   return s || "section";
 }
 
-/** 見出し・summary の文言から問題のキーを取り出す */
+/** 見出し・summary の文言から問題のキーを取り出す
+ *  「第 1 問」のような空白入りや、「問1 ・ 問2」「問1、問2」のような並びにも対応する */
+const LABEL_RE = /^(?:第\s*\d+\s*問|問\s*\d+|演習\s*\d+)(?:\s*[・、,，]\s*(?:第\s*\d+\s*問|問\s*\d+|演習\s*\d+))*/;
 function exerciseKeys(text) {
   const t = stripTags(text);
   if (/^発展/.test(t)) return ["発展"];
   if (/^チャレンジ/.test(t)) return ["チャレンジ"];
-  if (!/^(第\s*\d+\s*問|問\s*\d+|演習\s*\d+)/.test(t)) return [];
-  const label = t.split(/\s|──|（|\(/)[0];
-  return [...label.matchAll(/\d+/g)].map((m) => m[0]);
+  const m = t.match(LABEL_RE);
+  if (!m) return [];
+  return [...m[0].matchAll(/\d+/g)].map((d) => d[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -77,14 +79,15 @@ function wrapTables(html) {
     last = m.index + m[0].length;
   }
   out += html.slice(last);
-  // 領域に名前を付ける（表の見出し行から）。tabindex は JS がはみ出しを検出したときだけ付ける
+  // 領域に名前を付ける（表の見出し行から）。JS が無くてもキーボードで横スクロールできるよう
+  // tabindex="0" を最初から付けておき、はみ出していない表からは JS が外す
   return out.replace(
     /<div class="table-scroll" data-scroll-region>(\s*<table[\s>][\s\S]*?<\/table>)/g,
     (all, table) => {
       const head = table.match(/<thead>[\s\S]*?<\/thead>/);
       const cols = head ? [...head[0].matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((c) => stripTags(c[1])).filter(Boolean) : [];
       const label = cols.length ? `表：${cols.slice(0, 3).join("・")}` : "表";
-      return `<div class="table-scroll" data-scroll-region role="region" aria-label="${escapeHtml(label)}">${table}`;
+      return `<div class="table-scroll" data-scroll-region role="region" aria-label="${escapeHtml(label)}" tabindex="0">${table}`;
     }
   );
 }
@@ -321,14 +324,28 @@ function enhanceLesson(html, { exercises, slug }) {
     // 後ろから差し込む
     for (let i = probs.length - 1; i >= 0; i--) {
       const p = probs[i];
-      const step = exercises.find((s) => p.keys.includes(s.key));
-      if (!step) continue;
+      const steps = exercises.filter((s) => p.keys.includes(s.key));
+      if (!steps.length) continue;
       const end = i + 1 < probs.length ? body.lastIndexOf("<h4", probs[i + 1].pos) : to;
-      const box = renderStepBox(slug, step, {
-        result: resultIds[step.key] || (secResult && secResult.id),
-        answer: answerIds[step.key],
-      });
-      body = body.slice(0, end) + box + "\n" + body.slice(end);
+      // 差し込む位置が、問題の見出しと同じ階層にあるか確かめる
+      // （問題の途中で <div> や <details> が閉じていないと、ボックスがその中に入ってしまう）
+      const between = body.slice(p.pos, end);
+      for (const tag of ["div", "details", "section", "aside", "figure"]) {
+        const open = (between.match(new RegExp(`<${tag}[\\s>]`, "g")) || []).length;
+        const close = (between.match(new RegExp(`</${tag}>`, "g")) || []).length;
+        if (open !== close) {
+          console.warn(`[lesson-enhance] ★${slug} ${p.text}: <${tag}> の開き(${open})と閉じ(${close})が合わないため、手順ボックスの位置がずれている可能性があります`);
+        }
+      }
+      const boxes = steps
+        .map((step) =>
+          renderStepBox(slug, step, {
+            result: resultIds[step.key] || (secResult && secResult.id),
+            answer: answerIds[step.key],
+          })
+        )
+        .join("\n");
+      body = body.slice(0, end) + boxes + "\n" + body.slice(end);
     }
   }
 
