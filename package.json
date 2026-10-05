@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "柏木タイム（Java オブジェクト指向 全7回）学習サイト",
   "scripts": {
-    "build": "npm run clean && eleventy",
+    "build": "npm run clean && eleventy && node config/check-site.js",
     "build:fast": "eleventy",
     "build:dev": "npm run clean && node -e \"process.env.ELEVENTY_ENV='dev';require('child_process').execSync('eleventy',{stdio:'inherit',env:process.env,shell:true})\"",
     "start": "eleventy --serve",
@@ -13,7 +13,8 @@
     "clean": "node -e \"require('fs').rmSync('_site',{recursive:true,force:true})\"",
     "serve:built": "node tools/serve-built.js",
     "vendor:prism": "node config/vendor-prism.js",
-    "check": "node config/check.js"
+    "check": "node config/check.js",
+    "check:site": "node config/check-site.js"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.1.6",

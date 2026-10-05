@@ -61,6 +61,11 @@ module.exports = function (eleventyConfig) {
   /** 全角数字にしない前提の回番号表示: 1 → 第1回 */
   eleventyConfig.addFilter("kaiLabel", (order) => `第${order}回`);
 
+  /** 「チャレンジプロジェクト」の回だけ（true）／それ以外だけ（false）を取り出す */
+  eleventyConfig.addFilter("byProject", (lessons, flag) =>
+    (lessons || []).filter((l) => Boolean(l.data.lesson && l.data.lesson.project) === flag)
+  );
+
   /** コレクション内の前後を取り出す（無ければ null） */
   eleventyConfig.addFilter("neighbors", (lessons, order) => {
     const list = lessons || [];
@@ -77,6 +82,13 @@ module.exports = function (eleventyConfig) {
   // コードブロック（decisions.md 決定5）
   // -------------------------------------------------------------------------
   require("./config/codeblocks.js")(eleventyConfig, { srcDir: "src" });
+
+  // -------------------------------------------------------------------------
+  // 読み進めるための道具（目次・各問の手順ボックス・表のスクロール領域）と
+  // 回ごとの配布 ZIP
+  // -------------------------------------------------------------------------
+  require("./config/lesson-enhance.js")(eleventyConfig, { srcDir: "src" });
+  require("./config/zip-downloads.js")(eleventyConfig, { srcDir: "src" });
 
   // -------------------------------------------------------------------------
   // 図解ショートコード ── 別の担当が作る。まだ無い場合は読み込まない。

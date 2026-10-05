@@ -8,6 +8,7 @@
       <ul>
         <li><a href="{{ 'index.html' | rel }}"{% if page.url == '/index.html' %} aria-current="page"{% endif %}>トップ</a></li>
         <li><a href="{{ 'start.html' | rel }}"{% if page.url == '/start.html' %} aria-current="page"{% endif %}>はじめに</a></li>
+        <li><a href="{{ 'index.html' | rel }}#lesson-index-title">全{{ collections.lessons.length }}回</a></li>
       </ul>
     </nav>
   </div>

@@ -30,12 +30,13 @@ npm run serve:built    # ビルド済みの _site/ を静的サーバで配信�
 
 | コマンド | 内容 |
 |---|---|
-| `npm run build` | `src/` → `_site/` にビルド（本番向け。部品見本ページは出ない） |
+| `npm run build` | `src/` → `_site/` にビルドし、最後に公開前チェック（`check:site`）を走らせる（本番向け。部品見本ページは出ない） |
 | `npm run build:dev` | 開発向けビルド。部品見本ページ（`figure-gallery.html`）も出す |
 | `npm start` / `npm run serve` | 開発サーバ（http://localhost:8080、ファイル変更を監視して自動リロード） |
 | `npm run serve:dev` | 開発サーバ＋部品見本ページ |
 | `npm run serve:built` | `npm run build` した `_site/` を静的サーバで配信する（**見た目の最終確認はここで行う**） |
 | `npm run check` | ビルドせずにコードブロックのチェックだけ実行 |
+| `npm run check:site` | ビルド済みの `_site/` を検査する（リンク切れ・#id の有無・配布 ZIP・演習データと配布ファイルの対応）。1件でも問題があれば失敗する |
 | `npm run clean` | `_site/` を消す |
 | `npm run vendor:prism` | `node_modules/prismjs` から `src/assets/js/prism.js` / `prism.css` を作り直す |
 
@@ -83,18 +84,22 @@ site/
 │   ├── codeblocks.js         コードブロックの描画ルール＋全角文字チェック
 │   ├── check.js              npm run check の中身
 │   ├── vendor-prism.js       Prism.js の同梱スクリプト
-│   └── shortcodes.js         図解ショートコード（部品化された図解の実装）
+│   ├── shortcodes.js         図解ショートコード（部品化された図解の実装）
+│   ├── lesson-enhance.js     ビルド後の HTML に目次・各問の手順ボックス・解答へのリンク・表のスクロール領域を足す
+│   ├── zip-downloads.js      回ごとの配布 ZIP（_site/downloads/<slug>.zip）を作る
+│   └── check-site.js         npm run check:site（公開前チェック）の中身
 ├── docs/                     開発時の作業記録（学習者向けページではない。3章参照）
 ├── src/
 │   ├── _data/site.json       ★サイト名と全7回のメタ情報（唯一の情報源）
+│   ├── _data/exercises.js    ★各回の演習の「フォルダ・コンパイルするファイル・実行するクラス」
 │   ├── _figure-gallery.md /  部品見本ページ（開発用。上記「部品見本ページ」参照）
 │   │   _figure-gallery.11tydata.js
 │   ├── _includes/
 │   │   ├── layouts/          base.njk（全ページ共通）/ lesson.njk（各回）
 │   │   └── partials/         site-header / site-footer / lesson-nav / lesson-index
 │   ├── assets/
-│   │   ├── css/  tokens.css → base.css → layout.css → code.css → figures.css
-│   │   └── js/   prism.js（同梱）/ prism.css / main.js
+│   │   ├── css/  tokens.css → base.css → layout.css → code.css → figures.css → reading.css
+│   │   └── js/   prism.js（同梱）/ prism.css / main.js（コピー）/ reading.js（目次・進捗）
 │   ├── index.md              トップ
 │   ├── start.md               はじめに
 │   ├── lessons/               各回7ページ（front matter は order: だけ）
@@ -121,7 +126,27 @@ site/
 1. `src/_data/site.json` の `lessons` に1件足す（`order: 8`, `slug`, `title`, …）
 2. `src/lessons/08-xxxx.md` を作り、front matter に `order: 8` と書く
 
-これだけでトップの一覧表と前後リンクが更新される。手作業のリンク修正は無い。
+3. 配布ソースを `src/downloads/08-xxxx/` に置き、`src/_data/exercises.js` に各問の手順を足す
+
+これだけでトップの一覧・前後リンク・目次・手順ボックス・配布 ZIP が更新される。手作業のリンク修正は無い。
+`exercises.js` に書いたファイルが無い、問題の見出しが見つからない、といった食い違いは
+`npm run build` の最後の公開前チェックで止まる。
+
+### 読み進めるための道具（2026-10 追加）
+
+Markdown 側に特別な記法は要らない。ビルド時に `config/lesson-enhance.js` が見出しの文言から組み立てる。
+
+- **目次**：各回の h2（第1部・第2部）・h3・h4 から作る。見出しには文言から作った id が付く
+  （例: `#演習`、`#問2-bankaccount-クラスを作成する`）。スクロールすると上に細いバーが出て、現在地と目次を開ける。
+- **手順ボックス**：「演習」の中の h4 のうち、「第1問／問1／演習1／発展」で始まるものの末尾に差し込む。
+  中身は `src/_data/exercises.js` の同じ `key` の項目。実行結果の例・解答へのリンクと「できた」チェックも付く。
+- **解答のリンク**：「解答・解説」の中の `<details>` のうち、`<summary>` が「問1 の解答を見る」のように
+  問題名で始まるものに `id="answer-1"` と「問題に戻る」リンクを付ける。
+- **進捗**：「できた」「この回を完了にする」「続きから読む」は `assets/js/reading.js` が
+  `localStorage`（キー `kashiwagi-time:progress:v1`）に保存する。サーバーには何も送らない。
+  JS が無い・保存できない環境では、これらの部品は出さない（教材は普通に読める）。
+- **表**：はみ出す表は `.table-scroll` で包まれ、はみ出しているときだけキーボードで操作でき、「横にスクロールできます」と出る。
+  Markdown の表を `<div class="table-scroll">` で囲み忘れても、ビルド時に自動で包まれる。
 
 ---
 
@@ -207,7 +232,7 @@ site/
 
 ```html
 <details>
-<summary>▶ 解答を見る（クリックで開く）</summary>
+<summary>問1 の解答を見る</summary>
 
 ここは Markdown が使える。コードブロックも置ける。
 
@@ -215,6 +240,8 @@ site/
 ```
 
 - `<summary>` に長い文章を入れない（うっかりクリックで開く面積を広げないため）。
+- `<summary>` の先頭は「問1」「第1問」「演習1」「発展」のように**問題名で始める**（手順ボックスからのリンクと「問題に戻る」が自動で付く）。
+- 開閉の三角は CSS が描く。`▶` を手書きしない。
 - 印刷すると閉じたままになる（解答を伏せて配れる）。開いて印刷したいときは先に開く。
 
 ## 6. そのほか本文で使える class
@@ -224,7 +251,7 @@ site/
 | `<h2 class="part">` | 「第1部 …」「第2部 …」の大見出し |
 | `<div class="note">` | 補足。`note--hint` / `note--warn` / `note--ok` のバリエーションあり |
 | `<span class="term">` | 初出用語の強調（用語集は作らない方針の代わり） |
-| `<div class="table-scroll">` | 横に長い表を囲む（スマホで横スクロールさせる） |
+| `<div class="table-scroll">` | 横に長い表を囲む（囲み忘れてもビルド時に自動で包まれる） |
 
 図解は `config/shortcodes.js` のショートコードを使う。使い方は `npm run build:dev` で見られる
 部品見本ページ（`_site/figure-gallery.html`）と `docs/figures.md` を参照。
