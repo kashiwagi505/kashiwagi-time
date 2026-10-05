@@ -7,9 +7,25 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* hidden 属性は、display を指定したクラスより常に優先する（JS が出し入れする部品のため） */
+[hidden] { display: none !important; }
+
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* 画面には出さず、読み上げソフトにだけ伝える */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 body {
@@ -49,6 +65,10 @@ summary:focus-visible {
   padding: var(--sp-2) var(--sp-4);
 }
 .skip-link:focus { left: var(--sp-4); }
+
+/* 選択色・スクロールバーをアクセントに寄せる */
+::selection { background: var(--c-accent-soft); color: var(--c-accent-strong); }
+html { scrollbar-color: var(--c-border-strong) transparent; }
 
 /* ===========================================================================
    .prose — Markdown から出てくる本文のスタイル
@@ -112,20 +132,16 @@ summary:focus-visible {
 }
 
 /* -- 表 ------------------------------------------------------------------- */
-/* 既存資料は表が多い。スマホでは表を横スクロールさせる（本文幅は崩さない） */
+/* 既存資料は表が多い。はみ出す表は外側の .table-scroll で横スクロールさせる（本文幅は崩さない）。
+   囲み忘れた表も config/lesson-enhance.js がビルド時に .table-scroll で包むので、
+   表そのものは display:table のまま（スクロールを二重にしない）。 */
 .prose table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-2);
   background: var(--c-bg-raised);
-  /* Markdown の表は .table-scroll で囲み忘れると、641px 以上でも
-     ページ全体を横スクロールさせる（セルの最小幅が本文幅を超えるため）。
-     囲み忘れても事故にならないよう、全幅で横スクロールに逃がしておく。
-     ※ display:block にしても表としての見た目は保たれる。 */
-  display: block;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
+.prose tbody tr:nth-child(even) { background: var(--c-bg); }
 .prose thead th {
   background: var(--c-bg-sub);
   color: var(--c-accent-strong);
@@ -137,8 +153,7 @@ summary:focus-visible {
   vertical-align: top;
   line-height: var(--lh-tight);
 }
-/* Markdown の表は自動で .table-scroll に包まれないので、
-   横に長い表は明示的に <div class="table-scroll"> で囲む（README 参照） */
+/* 横にはみ出す表の受け皿。はみ出したときだけ JS がフォーカスできるようにし、案内を出す */
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -162,6 +177,25 @@ summary:focus-visible {
   line-height: var(--lh-tight);
   /* うっかり開かないよう、クリック領域を必要以上に広くしない */
   display: block;
+  list-style: none;
+}
+.prose details > summary::-webkit-details-marker { display: none; }
+/* 開閉マーカー。開くと下向きに回る（文言に手書きの ▶ は入れない） */
+.prose details > summary::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 0.6em;
+  border-style: solid;
+  border-width: 0.35em 0 0.35em 0.55em;
+  border-color: transparent transparent transparent currentColor;
+  vertical-align: 0.05em;
+  transition: transform 0.15s ease;
+}
+.prose details[open] > summary::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .prose details > summary::before { transition: none; }
 }
 .prose details[open] > summary {
   border-bottom: 1px solid var(--c-border);
@@ -247,9 +281,12 @@ summary:focus-visible {
   .prose h3 { font-size: var(--fs-4); }
   .prose ul, .prose ol { padding-left: 1.3em; }
   .prose details > :not(summary) { margin: var(--sp-3); }
-  /* 狭い画面では折り返しも止めて、潰して読めなくしない
-     （display:block と overflow-x は全幅で指定済み） */
-  .prose table { white-space: nowrap; }
+  /* 狭い画面では、説明のセルは折り返し、コード・短い値だけ改行させない。
+     列が潰れて1文字ずつ縦に並ばないよう、セルに最小幅を持たせる
+     （それでも収まらない表は .table-scroll が横スクロールで逃がす） */
+  .prose th, .prose td { min-width: 6.5em; }
+  .prose th:first-child, .prose td:first-child { min-width: 0; }
+  .prose td code, .prose th { white-space: nowrap; }
 }
 
 @media print {

@@ -210,3 +210,13 @@
   .codeblock { margin-left: calc(var(--sp-4) * -1); margin-right: calc(var(--sp-4) * -1); border-radius: 0; }
   .codeblock pre[class*="language-"] { font-size: 0.8125rem; }
 }
+
+/* 5. 手順ボックスのコマンド（config/lesson-enhance.js が出力する）。
+      Java コードではないのでハイライトせず、ターミナルらしい緑がかった文字にする */
+.codeblock--shell { border: 1px solid #3a3a44; }
+.codeblock--shell .codeblock__badge { background: var(--c-gold-strong); color: #fff; }
+.codeblock--shell pre[class*="language-"] {
+  padding: var(--sp-3) 5.5em var(--sp-3) var(--sp-4);
+  background: #1f1f26;
+}
+.codeblock--shell code[class*="language-"] { color: #c9f0d2; text-shadow: none; }

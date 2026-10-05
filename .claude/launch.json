@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "serve-built",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/serve-built.js"],
+      "port": 8123
+    }
+  ]
+}

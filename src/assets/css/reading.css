@@ -1,0 +1,699 @@
+/* ===========================================================================
+   reading.css — 読み進めるための道具（目次・手順ボックス・進捗・トップの一覧）
+   ---------------------------------------------------------------------------
+   ★色は tokens.css の変数だけを使う。概念色（黄＝情報／青＝動作）は流用しない。
+     進捗・完了は --c-ok、現在地・操作は --c-accent、世界観の帯は --c-gold。
+   ★ブレークポイントは 640px / 900px の2段だけ（tokens.css 末尾の取り決め）。
+   =========================================================================== */
+
+/* -- 共通の小部品 --------------------------------------------------------- */
+.icon { display: inline-block; flex: none; vertical-align: -0.2em; }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  border: 2px solid var(--c-accent);
+  line-height: var(--lh-tight);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.button:hover { border-color: var(--c-accent-strong); }
+.button--lg { padding: var(--sp-3) var(--sp-6); font-size: var(--fs-4); }
+.button--secondary,
+.button--ghost {
+  background: var(--c-bg-raised);
+  color: var(--c-accent);
+}
+.button--secondary:hover,
+.button--ghost:hover { background: var(--c-accent-soft); color: var(--c-accent-strong); }
+.button--ghost { border-width: 1px; border-color: var(--c-border-strong); font-size: var(--fs-2); padding: var(--sp-2) var(--sp-4); }
+.button--ghost:hover { border-color: var(--c-accent); }
+.button__main { display: block; }
+.button__sub { display: block; font-size: var(--fs-2); font-weight: 400; opacity: 0.92; margin-top: 2px; }
+[data-cta-resume] { flex-direction: column; align-items: flex-start; text-align: left; }
+
+.link-button {
+  background: none;
+  border: 0;
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--c-text-mute);
+  font: inherit;
+  font-size: var(--fs-2);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.link-button:hover { color: var(--c-danger); }
+
+.section-title {
+  font-size: var(--fs-6);
+  line-height: var(--lh-tight);
+  color: var(--c-accent-strong);
+}
+
+/* 進み具合のバー */
+.meter {
+  display: inline-block;
+  position: relative;
+  width: 8rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--c-bg-sub);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.meter__bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background: var(--c-ok);
+  transition: width 0.4s ease;
+}
+.meter--small { width: 5rem; height: 0.375rem; }
+.meter--lg { display: block; width: 100%; height: 0.625rem; }
+
+/* 状態のチップ（一覧・各回） */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-3);
+  border-radius: 999px;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.status--todo  { background: var(--c-bg-sub); color: var(--c-text-mute); font-weight: 400; }
+.status--doing { background: var(--c-accent-soft); color: var(--c-accent); }
+.status--done  { background: var(--c-ok-bg); color: var(--c-ok); }
+.status--done::before { content: "✓"; }
+.badge--done { border-color: var(--c-ok); background: var(--c-ok-bg); color: var(--c-ok); font-weight: 700; }
+.badge--done::before { content: "✓ "; }
+
+/* キーボード操作の目印を、入力欄とスクロール領域にも */
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--c-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+
+/* 固定バーに見出しが隠れないように */
+.lesson [id] { scroll-margin-top: 4.5rem; }
+
+/* ===========================================================================
+   トップ：ヒーロー
+   =========================================================================== */
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  align-items: center;
+  gap: var(--sp-6);
+  max-width: 60rem;
+  margin: 0 auto var(--sp-7);
+  padding: var(--sp-7);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-l);
+  background:
+    radial-gradient(120% 140% at 100% 0%, var(--c-accent-soft) 0%, transparent 55%),
+    linear-gradient(180deg, var(--c-bg-raised), var(--c-bg));
+  box-shadow: var(--shadow-s);
+  overflow: hidden;
+}
+.hero__kicker {
+  font-size: var(--fs-2);
+  font-weight: 700;
+  color: var(--c-gold);
+  letter-spacing: 0.06em;
+}
+.hero__title {
+  margin-top: var(--sp-2);
+  font-size: 3rem;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: var(--c-accent-strong);
+}
+.hero__lead {
+  margin-top: var(--sp-4);
+  font-size: var(--fs-4);
+  line-height: 1.8;
+  color: var(--c-text);
+}
+.hero__lead strong { color: var(--c-accent-strong); background: linear-gradient(transparent 62%, var(--c-gold-soft) 62%); }
+.hero__meta {
+  display: inline-block;
+  margin-top: var(--sp-4);
+  padding: 2px var(--sp-3);
+  border-radius: 999px;
+  background: var(--c-bg-sub);
+  font-size: var(--fs-2);
+  color: var(--c-text-mute);
+}
+.hero__cta {
+  margin-top: var(--sp-6);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+}
+.hero__sub { font-size: var(--fs-2); font-weight: 700; }
+
+.hero__art {
+  position: relative;
+  height: 17rem;
+}
+.hero__art img { position: absolute; height: auto; }
+.hero__circle {
+  width: 17rem;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  opacity: 0.22;
+  animation: hero-spin 90s linear infinite;
+}
+.hero__chara { filter: drop-shadow(0 6px 10px rgba(27, 31, 49, 0.18)); }
+.hero__chara--hero   { width: 9.5rem; left: 50%; bottom: 0; translate: -50% 0; z-index: 2; }
+.hero__chara--wizard { width: 7.5rem; left: 0;   bottom: 1.25rem; z-index: 1; }
+.hero__chara--tank   { width: 8.5rem; right: 0;  bottom: 1rem; z-index: 1; }
+@keyframes hero-spin { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero__circle { animation: none; }
+}
+
+/* -- 進み具合パネル -------------------------------------------------------- */
+.progress-panel {
+  max-width: 60rem;
+  margin: calc(var(--sp-7) * -1 + var(--sp-5)) auto var(--sp-7);
+  padding: var(--sp-5);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--c-ok);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-raised);
+  box-shadow: var(--shadow-s);
+}
+.progress-panel__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); }
+.progress-panel__title { font-size: var(--fs-4); color: var(--c-accent-strong); }
+.progress-panel__stats { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-7); margin: var(--sp-3) 0; }
+.stat { display: flex; align-items: baseline; gap: var(--sp-2); }
+.stat__num { font-size: var(--fs-6); font-weight: 700; color: var(--c-ok); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat__unit { font-size: var(--fs-2); color: var(--c-text-mute); }
+.progress-panel__note { margin-top: var(--sp-2); font-size: var(--fs-1); color: var(--c-text-mute); }
+
+/* ===========================================================================
+   トップ：全7回の一覧（順番を追える1列のカード）
+   =========================================================================== */
+.lesson-index { max-width: 60rem; margin: 0 auto; }
+.lesson-group { margin-top: var(--sp-6); }
+.lesson-group__head {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-m);
+  background: var(--c-accent-soft);
+  border-left: 4px solid var(--c-accent);
+}
+.lesson-group--project .lesson-group__head { background: var(--c-gold-soft); border-left-color: var(--c-gold); }
+.lesson-group__title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-4);
+  line-height: var(--lh-tight);
+  color: var(--c-accent-strong);
+}
+.lesson-group--project .lesson-group__title { color: var(--c-gold-strong); }
+.lesson-group__range { font-size: var(--fs-2); font-weight: 400; color: var(--c-text-mute); }
+.lesson-group__note { margin-top: var(--sp-1); font-size: var(--fs-2); color: var(--c-text); }
+
+.lesson-cards {
+  position: relative;
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+/* 番号を縦の線でつないで「道のり」に見せる */
+.lesson-cards::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--sp-5) + 1.375rem - 1px);
+  top: var(--sp-6);
+  bottom: var(--sp-6);
+  width: 2px;
+  background: var(--c-border);
+}
+.lesson-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  gap: var(--sp-4);
+  align-items: start;
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--c-bg-raised);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.lesson-card:hover { border-color: var(--c-accent); box-shadow: var(--shadow-m); transform: translateY(-1px); }
+.lesson-card:focus-within { border-color: var(--c-accent); box-shadow: var(--shadow-m); }
+@media (prefers-reduced-motion: reduce) {
+  .lesson-card, .lesson-card:hover { transition: none; transform: none; }
+}
+.lesson-card__no {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--c-accent-strong);
+  color: #fff;
+  font-size: var(--fs-4);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 4px var(--c-bg-raised);
+}
+.lesson-group--project .lesson-card__no { background: var(--c-gold-strong); }
+.lesson-card.is-done .lesson-card__no { background: var(--c-ok); }
+.lesson-card__kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  color: var(--c-text-mute);
+  letter-spacing: 0.06em;
+}
+.lesson-card__world { color: var(--c-gold); }
+.lesson-card__title { margin-top: 2px; font-size: var(--fs-5); line-height: var(--lh-tight); }
+.lesson-card__title a { color: var(--c-accent-strong); text-decoration: none; }
+/* カード全体を押せるように（カードの中に別の操作は置かない） */
+.lesson-card__title a::after { content: ""; position: absolute; inset: 0; border-radius: var(--radius-m); }
+.lesson-card__title a:focus-visible { outline: none; }
+.lesson-card__title a:focus-visible::after { outline: 3px solid var(--c-gold); outline-offset: 2px; }
+.lesson-card:hover .lesson-card__title a { color: var(--c-accent); text-decoration: underline; text-underline-offset: 0.2em; }
+.lesson-card__summary { margin-top: var(--sp-2); font-size: var(--fs-2); line-height: 1.75; color: var(--c-text); }
+.lesson-card__topics { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.lesson-card__topics li {
+  font-size: var(--fs-1);
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  background: var(--c-bg-sub);
+  color: var(--c-text-mute);
+  line-height: 1.8;
+}
+.lesson-card__side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-2); padding-top: 2px; }
+
+.home-prose { max-width: var(--w-content); margin: var(--sp-7) auto 0; }
+
+/* ===========================================================================
+   各回ページ：ヘッダの操作列
+   =========================================================================== */
+.lesson__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  margin-top: var(--sp-5);
+}
+.lesson__progress { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-2); color: var(--c-text-mute); }
+
+/* ===========================================================================
+   各回ページ：目次
+   =========================================================================== */
+.lesson-toc {
+  max-width: var(--w-content);
+  margin: var(--sp-5) auto 0;
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--c-bg-raised);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-s);
+}
+.lesson-toc__title { font-size: var(--fs-2); color: var(--c-text-mute); letter-spacing: 0.08em; }
+.lesson-toc__groups { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2) var(--sp-6); margin-top: var(--sp-2); }
+.lesson-toc__part {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  color: var(--c-gold);
+  letter-spacing: 0.06em;
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: var(--sp-1);
+}
+.lesson-toc__list, .lesson-toc__sub { list-style: none; margin: 0; padding: 0; }
+.lesson-toc__sub { margin: 0 0 var(--sp-1) var(--sp-3); }
+.lesson-toc a {
+  display: block;
+  padding: 3px var(--sp-2);
+  border-left: 3px solid transparent;
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  color: var(--c-text);
+  text-decoration: none;
+  font-size: var(--fs-2);
+  line-height: 1.5;
+}
+.lesson-toc__list > li > a { font-weight: 700; color: var(--c-accent-strong); }
+.lesson-toc__sub a { font-size: var(--fs-1); color: var(--c-text-mute); }
+.lesson-toc a:hover { background: var(--c-bg-sub); color: var(--c-accent); }
+.lesson-toc a[aria-current="location"],
+.lesson-bar__panel a[aria-current="location"] {
+  background: var(--c-accent-soft);
+  border-left-color: var(--c-accent);
+  color: var(--c-accent-strong);
+  font-weight: 700;
+}
+.lesson-toc__more > summary {
+  display: inline-block;
+  margin: 0 0 var(--sp-1) var(--sp-3);
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+  cursor: pointer;
+  list-style: none;
+}
+.lesson-toc__more > summary::-webkit-details-marker { display: none; }
+.lesson-toc__more > summary::before { content: "＋ "; }
+.lesson-toc__more[open] > summary::before { content: "－ "; }
+.lesson-toc__more > summary:hover { background: var(--c-bg-sub); color: var(--c-accent); }
+
+/* ===========================================================================
+   各回ページ：スクロールすると上に出る細いバー
+   =========================================================================== */
+.lesson-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid var(--c-border);
+  box-shadow: var(--shadow-s);
+  transform: translateY(-110%);
+  visibility: hidden;   /* 見えない間は Tab でも移れないように（inert 非対応ブラウザ向け） */
+  transition: transform 0.2s ease, visibility 0s linear 0.2s;
+}
+@supports (backdrop-filter: blur(8px)) {
+  .lesson-bar { background: rgba(255, 255, 255, 0.82); backdrop-filter: saturate(1.4) blur(8px); }
+}
+.lesson-bar.is-visible { transform: none; visibility: visible; transition: transform 0.2s ease; }
+.lesson [tabindex="-1"]:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) {
+  .lesson-bar { transition: none; }
+}
+.lesson-bar__inner {
+  max-width: var(--w-wide);
+  margin: 0 auto;
+  padding: var(--sp-2) var(--sp-5);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 3rem;
+}
+.lesson-bar__no {
+  flex: none;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  background: var(--c-accent-strong);
+  color: #fff;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  line-height: 1.8;
+}
+.lesson-bar__now {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-2);
+  font-weight: 700;
+  color: var(--c-accent-strong);
+}
+.lesson-bar__toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-raised);
+  color: var(--c-accent);
+  font: inherit;
+  font-size: var(--fs-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+.lesson-bar__toggle:hover { border-color: var(--c-accent); background: var(--c-accent-soft); }
+.lesson-bar__toggle .icon { transition: transform 0.15s ease; }
+.lesson-bar.is-open .lesson-bar__toggle .icon { transform: rotate(180deg); }
+.lesson-bar__panel {
+  position: absolute;
+  top: 100%;
+  right: max(var(--sp-5), calc((100vw - var(--w-wide)) / 2 + var(--sp-5)));
+  width: min(26rem, calc(100vw - 2 * var(--sp-4)));
+  max-height: min(70vh, 36rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-bg-raised);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-m);
+}
+.lesson-bar__panel .lesson-toc__groups { display: block; margin: 0; }
+.lesson-bar__panel .lesson-toc__group + .lesson-toc__group { margin-top: var(--sp-3); }
+.lesson-bar__panel a { /* 目次と同じ見た目を、パネルの中でも */
+  display: block;
+  padding: 4px var(--sp-2);
+  border-left: 3px solid transparent;
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+  color: var(--c-text);
+  text-decoration: none;
+  font-size: var(--fs-2);
+  line-height: 1.5;
+}
+.lesson-bar__panel .lesson-toc__list > li > a { font-weight: 700; color: var(--c-accent-strong); }
+.lesson-bar__panel .lesson-toc__sub a { font-size: var(--fs-1); color: var(--c-text-mute); }
+.lesson-bar__panel a:hover { background: var(--c-bg-sub); }
+/* 読んだ量（ページ全体に対する位置）を金の線で */
+.lesson-bar__read {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background: var(--c-gold);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+/* ===========================================================================
+   各回ページ：演習の入口と、各問の手順ボックス
+   =========================================================================== */
+.prose .ex-zip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px dashed var(--c-border-strong);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-raised);
+}
+.ex-zip span { font-size: var(--fs-2); color: var(--c-text-mute); }
+
+.prose .ex-box {
+  margin-top: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--c-bg-raised);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--c-accent);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-s);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.prose .ex-box.is-done { border-left-color: var(--c-ok); }
+.ex-box > * + * { margin-top: var(--sp-3); }
+.ex-box__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.ex-box__label {
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-s);
+  background: var(--c-accent-strong);
+  color: #fff;
+  font-size: var(--fs-1);
+  font-weight: 700;
+  line-height: 1.8;
+}
+.ex-box.is-done .ex-box__label { background: var(--c-ok); }
+.ex-box__title { font-size: var(--fs-3); font-weight: 700; color: var(--c-accent-strong); line-height: var(--lh-tight); }
+.prose .ex-box__steps { margin: var(--sp-3) 0 0; padding-left: 1.4em; font-size: var(--fs-2); }
+.prose .ex-box__steps li + li { margin-top: 2px; }
+.ex-box .codeblock { margin: var(--sp-3) 0 0; }
+.ex-box__note { font-size: var(--fs-2); color: var(--c-text-mute); }
+.ex-box__note::before { content: "※ "; }
+.ex-box__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+.ex-box__links { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; }
+.ex-box__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-sub);
+  font-size: var(--fs-2);
+  font-weight: 700;
+  text-decoration: none;
+}
+.ex-box__links a::after { content: "↓"; margin-left: var(--sp-1); }
+.ex-box__links a:hover { background: var(--c-accent-soft); }
+
+/* 「できた」チェック。ラベル全体を押せる大きさにする */
+.ex-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: 999px;
+  background: var(--c-bg-raised);
+  font-size: var(--fs-2);
+  font-weight: 700;
+  color: var(--c-text);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.ex-check:hover { border-color: var(--c-ok); }
+.ex-check input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--c-ok); cursor: pointer; }
+.ex-check:has(input:checked) { background: var(--c-ok-bg); border-color: var(--c-ok); color: var(--c-ok); }
+
+/* -- 解答 ----------------------------------------------------------------- */
+.prose details.answer { scroll-margin-top: 4.5rem; }
+.prose details.answer.is-flash { animation: answer-flash 1.6s ease; }
+@keyframes answer-flash {
+  0%, 30% { box-shadow: 0 0 0 4px var(--c-gold-soft), 0 0 0 6px var(--c-gold); }
+  100% { box-shadow: var(--shadow-s); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose details.answer.is-flash { animation: none; }
+}
+.prose .answer-back { margin-top: var(--sp-4); text-align: right; font-size: var(--fs-2); }
+.answer-back a + a { margin-left: var(--sp-4); }
+
+/* ===========================================================================
+   各回ページ：回の完了
+   =========================================================================== */
+.lesson-complete {
+  max-width: var(--w-content);
+  margin: var(--sp-7) auto 0;
+  padding: var(--sp-6) var(--sp-5);
+  text-align: center;
+  border: 1px solid var(--c-border);
+  border-top: 4px solid var(--c-gold);
+  border-radius: var(--radius-m);
+  background: var(--c-bg-raised);
+  box-shadow: var(--shadow-s);
+}
+.lesson-complete.is-done { border-top-color: var(--c-ok); background: linear-gradient(180deg, var(--c-ok-bg), var(--c-bg-raised) 70%); }
+.lesson-complete__title { font-size: var(--fs-5); color: var(--c-accent-strong); }
+.lesson-complete__summary { margin-top: var(--sp-2); color: var(--c-text); }
+.lesson-complete__button { margin-top: var(--sp-4); padding: var(--sp-3) var(--sp-6); font-size: var(--fs-3); }
+.lesson-complete.is-done .lesson-complete__button { background: var(--c-bg-raised); color: var(--c-ok); border-color: var(--c-ok); }
+.lesson-complete.is-done .lesson-complete__button:hover { background: var(--c-ok-bg); }
+.lesson-complete__note { margin-top: var(--sp-3); font-size: var(--fs-1); color: var(--c-text-mute); }
+
+/* ===========================================================================
+   横にはみ出す表
+   =========================================================================== */
+.prose .scroll-hint {
+  margin-bottom: calc(var(--sp-4) * -1 + var(--sp-1));
+  text-align: right;
+  font-size: var(--fs-1);
+  color: var(--c-text-mute);
+}
+.prose .scroll-hint::after { content: " →"; }
+.table-scroll.is-overflowing {
+  border-right: 3px solid var(--c-border-strong);
+  border-radius: var(--radius-s);
+}
+.table-scroll.is-overflowing.is-scrolled-end { border-right-color: transparent; }
+
+/* ===========================================================================
+   小さい画面
+   =========================================================================== */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: minmax(0, 1fr) 14rem; padding: var(--sp-6); }
+  .hero__art { height: 12rem; }
+  .hero__circle { width: 12rem; }
+  .hero__chara--hero { width: 7rem; }
+  .hero__chara--wizard { width: 5.5rem; }
+  .hero__chara--tank { width: 6rem; }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: calc(var(--sp-5) * -1);
+    padding: var(--sp-5) var(--sp-4);
+    margin-left: calc(var(--sp-4) * -1);
+    margin-right: calc(var(--sp-4) * -1);
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+  .hero__art { order: -1; height: 8.5rem; max-width: 15rem; width: 100%; margin: 0 auto var(--sp-3); }
+  .hero__circle { width: 8.5rem; }
+  .hero__chara--hero { width: 5rem; }
+  .hero__chara--wizard { width: 4rem; left: 1rem; }
+  .hero__chara--tank { width: 4.5rem; right: 1rem; }
+  .hero__title { font-size: var(--fs-7); }
+  .hero__lead { font-size: var(--fs-3); }
+  .hero__lead br { display: none; }
+  .hero__cta { flex-direction: column; align-items: stretch; }
+  .hero__cta .button { width: 100%; }
+  .hero__sub { text-align: center; }
+  [data-cta-resume] { align-items: center; text-align: center; }
+
+  .hero { margin-bottom: var(--sp-5); }
+  .progress-panel { margin-top: 0; margin-bottom: var(--sp-6); }
+
+  .lesson-card { grid-template-columns: 2.25rem minmax(0, 1fr); gap: var(--sp-3); padding: var(--sp-4); }
+  .lesson-card__no { width: 2.25rem; height: 2.25rem; font-size: var(--fs-3); }
+  .lesson-cards::before { left: calc(var(--sp-4) + 1.125rem - 1px); }
+  .lesson-card__side { grid-column: 2; flex-direction: row; align-items: center; justify-content: flex-start; padding-top: 0; }
+  .lesson-card__title { font-size: var(--fs-4); }
+
+  .lesson-toc { padding: var(--sp-3) var(--sp-4); }
+  .lesson-toc__groups { grid-template-columns: 1fr; }
+  .lesson-bar__inner { padding: var(--sp-2) var(--sp-4); }
+
+  .prose .ex-box { padding: var(--sp-4); margin-left: calc(var(--sp-2) * -1); margin-right: calc(var(--sp-2) * -1); }
+  .ex-box__foot { flex-direction: column; align-items: stretch; }
+  .ex-check { justify-content: center; }
+  .ex-box__links a { flex: 1; justify-content: center; }
+}
+
+@media print {
+  .lesson-bar, .lesson-toc, .ex-check, .lesson-complete, .lesson__actions, .progress-panel, .hero__art { display: none !important; }
+}

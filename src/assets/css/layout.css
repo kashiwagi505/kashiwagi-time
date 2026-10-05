@@ -78,27 +78,7 @@
 /* ===========================================================================
    トップページ
    =========================================================================== */
-.hero {
-  max-width: var(--w-content);
-  margin: 0 auto var(--sp-7);
-  text-align: left;
-}
-.hero__title {
-  font-size: var(--fs-7);
-  line-height: var(--lh-tight);
-  color: var(--c-accent-strong);
-}
-.hero__lead {
-  margin-top: var(--sp-4);
-  font-size: var(--fs-4);
-  color: var(--c-text);
-}
-.hero__meta {
-  margin-top: var(--sp-3);
-  font-size: var(--fs-2);
-  color: var(--c-text-mute);
-}
-.hero__cta { margin-top: var(--sp-5); }
+/* ヒーロー・進み具合・一覧のカードは reading.css */
 .button {
   display: inline-block;
   padding: var(--sp-3) var(--sp-5);
@@ -110,61 +90,6 @@
   box-shadow: var(--shadow-s);
 }
 .button:hover { background: var(--c-accent-strong); color: #fff; }
-
-/* -- 全7回の一覧表 -------------------------------------------------------- */
-.lesson-index {
-  max-width: var(--w-wide);
-  margin: 0 auto;
-}
-.lesson-index__scroll { overflow-x: auto; }
-.lesson-index table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--c-bg-raised);
-  box-shadow: var(--shadow-s);
-  font-size: var(--fs-2);
-}
-.lesson-index thead th {
-  background: var(--c-accent-soft);
-  color: var(--c-accent-strong);
-  text-align: left;
-  padding: var(--sp-3);
-  border-bottom: 2px solid var(--c-border-strong);
-  white-space: nowrap;
-}
-.lesson-index td {
-  padding: var(--sp-3);
-  border-bottom: 1px solid var(--c-border);
-  vertical-align: top;
-  line-height: var(--lh-tight);
-}
-.lesson-index td:first-child { white-space: nowrap; color: var(--c-text-mute); }
-.lesson-index__link { font-weight: 700; font-size: var(--fs-3); }
-.lesson-index__world { display: block; color: var(--c-text-mute); font-size: var(--fs-1); }
-.lesson-index__topics { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-1); }
-.lesson-index__topics li {
-  font-size: var(--fs-1);
-  padding: 0 var(--sp-2);
-  border-radius: var(--radius-s);
-  background: var(--c-bg-sub);
-  color: var(--c-text-mute);
-  white-space: nowrap;
-}
-
-/* 第4〜7回（勇者一行のチャレンジプロジェクト）のグルーピング */
-.lesson-index tbody tr.is-project { background: var(--c-gold-soft); }
-.lesson-index tbody tr.is-project td { border-bottom-color: #e8dcb4; }
-.lesson-index tbody tr.is-project--first td { border-top: 2px solid var(--c-gold); }
-.lesson-index tbody tr.is-project--last td { border-bottom: 2px solid var(--c-gold); }
-.lesson-index__group th {
-  text-align: left;
-  padding: var(--sp-2) var(--sp-3);
-  background: var(--c-gold);
-  color: #fff;
-  font-size: var(--fs-2);
-  letter-spacing: 0.04em;
-}
-.lesson-index__group th small { font-weight: 400; opacity: 0.9; margin-left: var(--sp-3); }
 
 /* ===========================================================================
    各回ページのヘッダ
@@ -301,14 +226,10 @@
   .site-header__inner { padding: var(--sp-3) var(--sp-4); gap: var(--sp-2); }
   .site-nav { margin-left: 0; width: 100%; }
   .lesson__title { font-size: var(--fs-6); }
-  .hero__title { font-size: var(--fs-6); }
-  .hero__lead { font-size: var(--fs-3); }
 
   /* 前後リンクは縦積み（対比ではないので縦でも意味が保たれる） */
   .lesson-nav__list { grid-template-columns: 1fr; }
   .lesson-nav__item--next { text-align: left; }
   .lesson-nav__item--index { text-align: left; }
 
-  /* 一覧表は横スクロールで逃がす */
-  .lesson-index__scroll { margin: 0 calc(var(--sp-4) * -1); padding: 0 var(--sp-4); }
 }

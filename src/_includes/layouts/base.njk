@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% if title %}{{ title }}｜{{ site.name }}{% else %}{{ site.name }}｜{{ site.tagline }}{% endif %}</title>
 <meta name="description" content="{{ description or site.description }}">
+<meta name="theme-color" content="#291e60">
+{#- ファビコンは外部ファイルを増やさないよう SVG をその場に埋め込む（藍の地に「柏」、下に金の帯） -#}
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23291e60'/%3E%3Crect y='54' width='64' height='10' fill='%23a67c00'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='700'%3E%E6%9F%8F%3C/text%3E%3C/svg%3E">
 {#- CSS はすべて相対パス。ルート絶対パスは使わない（GitHub Pages のサブディレクトリ配信対策） -#}
 <link rel="stylesheet" href="{{ 'assets/css/tokens.css' | rel }}">
 <link rel="stylesheet" href="{{ 'assets/css/base.css' | rel }}">
 <link rel="stylesheet" href="{{ 'assets/css/layout.css' | rel }}">
 <link rel="stylesheet" href="{{ 'assets/js/prism.css' | rel }}">
 <link rel="stylesheet" href="{{ 'assets/css/code.css' | rel }}">
-{#- 図解のCSS。図解ショートコード担当が用意する（未作成のあいだは404になるだけでビルドは通る） -#}
 <link rel="stylesheet" href="{{ 'assets/css/figures.css' | rel }}">
+<link rel="stylesheet" href="{{ 'assets/css/reading.css' | rel }}">
 </head>
 <body class="{{ bodyClass or 'page-default' }}">
 <a class="skip-link" href="#main">本文へ移動</a>
@@ -21,7 +24,9 @@
 {{ content | safe }}
 </main>
 {% include "partials/site-footer.njk" %}
+{#- Prism はコードブロックのあるページでだけ読み込む（config/lesson-enhance.js が外す） -#}
 <script src="{{ 'assets/js/prism.js' | rel }}"></script>
 <script src="{{ 'assets/js/main.js' | rel }}"></script>
+<script src="{{ 'assets/js/reading.js' | rel }}"></script>
 </body>
 </html>

@@ -225,8 +225,8 @@ account.getPassword();
 <span class="note__title">配布した状態ではコンパイルが通りません</span>
 
 `Main.java` が、これから作る getter / setter を呼んでいるためです。**これは壊れているのではなく、
-穴が埋まっていないだけ**です。また javac は最初に見つけたエラーで報告を打ち切るので、
-**1つ直すと次のエラーが現れます**。エラーが減っていれば前に進んでいます。
+穴が埋まっていないだけ**です。また javac はエラーをまとめて報告しますが、
+**1つ直すと別のエラーが新しく現れることもあります**。エラーが減っていれば前に進んでいます。
 
 </div>
 
@@ -450,7 +450,7 @@ public class Player {
 使う形になっていれば正解**です。
 
 <details>
-<summary>▶ 問1 の解答を見る</summary>
+<summary>問1 の解答を見る</summary>
 
 ```java file=Student.java
 public class Student {
@@ -481,7 +481,7 @@ getter / setter を足すと通るようになります。**この往復が「�
 </details>
 
 <details>
-<summary>▶ 問2 の解答を見る</summary>
+<summary>問2 の解答を見る</summary>
 
 ```java file=BankAccount.java hl=7-17
 public class BankAccount {
@@ -545,7 +545,7 @@ public class BankAccount {
 </details>
 
 <details>
-<summary>▶ 問3 の解答を見る</summary>
+<summary>問3 の解答を見る</summary>
 
 ```java file=Player.java hl=47-64
 public class Player {

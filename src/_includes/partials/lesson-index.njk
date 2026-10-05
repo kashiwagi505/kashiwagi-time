@@ -1,32 +1,43 @@
 {#-
-  トップページの「全7回の一覧表」。
+  トップページの「全7回の一覧」。
   collections.lessons（order 昇順）から自動生成する。
-  第4〜7回は site.json の lessons[].project フラグでまとめて帯を付ける。
+  site.json の lessons[].project で「基礎編」と「チャレンジプロジェクト」の2つに分ける。
   第8回を足したいときは src/lessons/08-xxx.md と site.json に追記するだけ。
+  進捗（未着手・学習中・完了）は main.js がこのブラウザの記録から書き込む。
 -#}
 <section class="lesson-index" aria-labelledby="lesson-index-title">
-<h2 id="lesson-index-title">全{{ site.totalLessons }}回の道のり</h2>
-<div class="lesson-index__scroll">
-<table>
-<thead>
-<tr><th scope="col">回</th><th scope="col">テーマ</th><th scope="col">この回で扱うこと</th></tr>
-</thead>
-<tbody>
-{%- for item in collections.lessons -%}
-{%- set l = item.data.lesson -%}
-{%- set prevL = collections.lessons[loop.index0 - 1].data.lesson if loop.index0 > 0 else null -%}
-{%- set isFirstProject = l.project and (not prevL or not prevL.project) -%}
-{%- set isLastProject = l.project and loop.last -%}
-{%- if isFirstProject -%}
-<tr class="lesson-index__group"><th colspan="3" scope="colgroup">{{ site.project.label }}<small>{{ site.project.note }}</small></th></tr>
-{%- endif -%}
-<tr{% if l.project %} class="is-project{% if isFirstProject %} is-project--first{% endif %}{% if isLastProject %} is-project--last{% endif %}"{% endif %}>
-<td>第{{ l.order }}回</td>
-<td><a class="lesson-index__link" href="{{ item.url | rel }}">{{ l.title }}</a>{% if l.worldName %}<span class="lesson-index__world">{{ l.worldName }}</span>{% endif %}</td>
-<td>{{ l.summary }}{% if l.topics %}<ul class="lesson-index__topics">{% for t in l.topics %}<li>{{ t }}</li>{% endfor %}</ul>{% endif %}</td>
-</tr>
-{%- endfor -%}
-</tbody>
-</table>
+<h2 class="section-title" id="lesson-index-title">全{{ collections.lessons.length }}回の道のり</h2>
+{%- set groups = [
+  { key: "basics", info: site.basics, items: collections.lessons | byProject(false) },
+  { key: "project", info: site.project, items: collections.lessons | byProject(true) }
+] -%}
+{%- for g in groups %}{% if g.items.length %}
+<div class="lesson-group lesson-group--{{ g.key }}">
+  <div class="lesson-group__head">
+    <h3 class="lesson-group__title">{{ g.info.label }}<span class="lesson-group__range">第{{ g.items[0].data.lesson.order }}〜{{ g.items[g.items.length - 1].data.lesson.order }}回</span></h3>
+    <p class="lesson-group__note">{{ g.info.note }}</p>
+  </div>
+  <ol class="lesson-cards">
+  {%- for item in g.items -%}
+  {%- set l = item.data.lesson -%}
+  {%- set steps = exercises[l.slug] or [] %}
+    <li class="lesson-card" data-lesson-card="{{ l.slug }}" data-ex-total="{{ steps.length }}" data-ex-keys="{% for st in steps %}{{ st.key }}{% if not loop.last %} {% endif %}{% endfor %}">
+      <span class="lesson-card__no" aria-hidden="true">{{ l.order }}</span>
+      <div class="lesson-card__main">
+        <p class="lesson-card__kicker">第{{ l.order }}回{% if l.worldName %}<span class="lesson-card__world">{{ l.worldName }}</span>{% endif %}</p>
+        <h4 class="lesson-card__title"><a href="{{ item.url | rel }}">{{ l.title }}</a></h4>
+        <p class="lesson-card__summary">{{ l.summary }}</p>
+        {%- if l.topics %}
+        <ul class="lesson-card__topics" aria-label="扱う内容">{% for t in l.topics %}<li>{{ t }}</li>{% endfor %}</ul>
+        {%- endif %}
+      </div>
+      <div class="lesson-card__side">
+        <span class="status status--todo" data-lesson-status>演習 {{ steps.length }}問</span>
+        <span class="meter meter--small" aria-hidden="true" data-lesson-meter hidden><span class="meter__bar"></span></span>
+      </div>
+    </li>
+  {%- endfor %}
+  </ol>
 </div>
+{%- endif %}{% endfor %}
 </section>

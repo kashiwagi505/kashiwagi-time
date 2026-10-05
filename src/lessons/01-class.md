@@ -327,10 +327,11 @@ class Student {
 **埋めるのは比較条件と交換処理**が中心です。クラスの枠・コンストラクタ・表示処理は与えてあります。
 
 <div class="note note--warn">
-<span class="note__title">配布したままではコンパイルできません（それが正常です）</span>
+<span class="note__title">第2問・第3問は、配布したままではコンパイルできません（それが正常です）</span>
 中身が空のメソッドが入っているので、ダウンロード直後は <code>javac</code> がエラーを出します。
-また <code>javac</code> は最初に見つけたエラーで報告を打ち切るため、
-<strong>1か所直すと次のエラーが現れます。</strong>「直したのにまだエラーが出る」のは失敗ではありません。
+（第1問はそのままでもコンパイル・実行できますが、TODO を埋めるまでは並べ替わりません。）
+また <code>javac</code> は、ある誤りのせいで先を読めなくなると、その先のエラーをまだ報告しません。
+そのため<strong>1か所直すと、別のエラーが新しく現れることがあります。</strong>「直したのにまだエラーが出る」のは失敗ではありません。
 TODO をすべて埋めるまで、この繰り返しになります。
 </div>
 
@@ -464,7 +465,7 @@ Rank No Name     Eng Math Jap Total Avg
 ### 解答・解説
 
 <details>
-<summary>▶ 第1問の解答を見る</summary>
+<summary>第1問の解答を見る</summary>
 
 `HeightSortWithClass.java` の並べ替え部分。金色の行が埋めたところです。
 
@@ -499,7 +500,7 @@ for (int i = 0; i < students.length - 1; i++) {
 </details>
 
 <details>
-<summary>▶ 第2問の解答を見る</summary>
+<summary>第2問の解答を見る</summary>
 
 `Runner.java`
 
@@ -557,7 +558,7 @@ for (int i = 0; i < count - 1; i++) {
 </details>
 
 <details>
-<summary>▶ 第3問の解答を見る</summary>
+<summary>第3問の解答を見る</summary>
 
 `ExamResult.java`
 

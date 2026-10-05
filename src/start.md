@@ -17,8 +17,9 @@ eleventyExcludeFromCollections: true
       「既知として扱えるか要確認」との申し送りに対する暫定対応で、全回共通の前提には昇格させていない。
     ・開発環境は「JDKとjavac/javaコマンドが使えること」だけを前提にし、IDE名を出していない。
       各回ページの「1問ぶんのファイルを同じ場所に置いてjavacでコンパイルする」という書き方に揃えた。
-    ・配布ソースの扱いは、ダウンロードが回フォルダ単位のファイルリンクであること（zip配布は未実装）、
-      穴埋め状態のため配布直後はコンパイルが通らない回があることを、回ごとの詳細に踏み込まずに書いた。
+    ・配布ソースは回ごとの ZIP（ビルド時に config/zip-downloads.js が作る）と個別ファイルの両方。
+      各問の末尾の手順ボックス（src/_data/exercises.js から生成）にコマンドがあることをここで案内する。
+      穴埋め状態のため配布直後はコンパイルが通らない回があることは、回ごとの詳細に踏み込まずに書いた。
 -->
 <div class="lesson__header">
 <p class="lesson__kicker"><span class="lesson__no">はじめに</span></p>
@@ -62,7 +63,7 @@ eleventyExcludeFromCollections: true
 解答は折りたたみに入っているので、自分で試したあとに開いてください。
 
 <details>
-<summary>▶ 折りたたみはこう開きます（クリック）</summary>
+<summary>折りたたみはこう開きます（クリック）</summary>
 
 このように中身が出てきます。解答はすべてこの形で入っています。
 
@@ -70,13 +71,23 @@ eleventyExcludeFromCollections: true
 
 ## 配布ソースの扱い
 
-各回のページの第2部に、その回で使う `.java` ファイルへのダウンロードリンクがあります。
+各回のページの冒頭と第2部の「演習」に、<strong>その回の演習ファイル一式（ZIP）</strong>があります。
+展開すると回の名前のフォルダ（例: <code>03-encapsulation</code>）ができ、中に <code>README.txt</code> として手順もまとめてあります。
+個別の <code>.java</code> ファイルも、演習の表からダウンロードできます。
 フォルダに入っているのは<strong>その回の「開始状態」</strong>で、前の回を終えたところから続きます。
+
+各問の末尾には、次のような<strong>手順ボックス</strong>があります。移動するフォルダ・コンパイルするファイル・実行するクラスが書いてあるので、
+コピーしてそのままターミナルに貼り付けられます。
+
+<div class="note">
+<span class="note__title">手順ボックスのコマンドの例（第3回 問1）</span>
+<code>cd 03-encapsulation/ex1</code> → <code>javac -encoding UTF-8 Student.java Main.java</code> → <code>java Main</code>
+</div>
 
 <div class="note note--warn">
 <span class="note__title">配布したままではコンパイルが通らないことがあります（それが正常です）</span>
 穴埋め状態のファイルが含まれているため、ダウンロード直後は <code>javac</code> がエラーを出す回があります。
-<code>javac</code> は最初に見つけたエラーで報告を打ち切るので、<strong>1か所直すと次のエラーが現れる</strong>こともあります。
+<code>javac</code> はエラーをまとめて報告することもありますが、構文の誤りなどがあるとそこで先に進めず、<strong>1か所直すと別のエラーが新しく現れる</strong>こともあります。
 どの回でどこまで動くかは、各回のページに書いてあります。
 </div>
 
@@ -98,5 +109,22 @@ eleventyExcludeFromCollections: true
 フォルダの中の <code>ex1</code> <code>ex2</code> のような分け方は、この衝突を避けるためのものです。
 1問ぶんのファイルだけを1つのフォルダにまとめてください。
 </div>
+
+<div class="note">
+<span class="note__title">なぜ <code>-encoding UTF-8</code> を付けるのか</span>
+配布ファイルは UTF-8 で保存してあります。JDK 17 以前の日本語版 Windows では、<code>javac</code> が別の文字コード（MS932）で読もうとするため、
+日本語のコメントや文字列で、文字コードのエラーや文字化けが起きることがあります。
+<code>-encoding UTF-8</code> を付けておけば、どの環境でも同じように読み込まれます（JDK 18 以降では付けなくても動きます）。
+</div>
+
+## 進み具合の記録
+
+問題を解いたら、手順ボックスの<strong>「できた」</strong>にチェックを入れてください。
+1回分を読み終えたら、ページの末尾にある<strong>「この回を完了にする」</strong>を押します。
+トップページに、完了した回の数と、最後に読んでいた場所へ戻る<strong>「続きから読む」</strong>ボタンが出るようになります。
+
+記録はこのブラウザの中だけに保存されます（サーバーには送られません）。
+別のパソコンやブラウザには引き継がれないので、いつも同じブラウザで開くと便利です。
+記録を消したいときは、トップページの「記録を消す」を押してください。
 
 </div>

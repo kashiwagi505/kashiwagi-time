@@ -202,7 +202,7 @@ this.{% ct "name", "info" %} = {% ct "name", "gold" %};
 
 #### 3. コンストラクタのオーバーロード ── 作り方を選べる
 
-コンストラクタもメソッドなので、**オーバーロードできます。**
+コンストラクタは厳密にはメソッドではありませんが、メソッドと同じように**オーバーロードできます。**
 つまり「作り方」を何パターンも用意できます。
 
 {% compare { "axis":"v", "cols":3, "vs":"どの呼び方でも Monster が1体できる ↓", "wide":true, "caption":"図B ── 入口は3つ、できるクラスは1つ。渡さなかったぶんは、あらかじめ決めた既定値で埋まる" } %}
@@ -379,8 +379,8 @@ Character c = new Character(“ゆいたろう”);
 ただし実行すると、演習1は**何も表示されず**、演習2・演習3は<strong>`名前: null` / `HP: 0` / `攻撃力: 0`</strong>
 になります。「エラーが出ないから合っている」ではなく、**実行結果を見て**確かめてください。
 
-なお埋め始めてエラーが出た場合、`javac` は最初に見つけたエラーで報告を打ち切るので、
-**1つ直すと次のエラーが現れます。** エラーが減っていれば前に進んでいます。
+なお埋め始めてエラーが出た場合、`javac` はエラーをまとめて報告しますが、
+**1つ直すと別のエラーが新しく現れることもあります。** エラーが減っていれば前に進んでいます。
 
 </div>
 
@@ -600,7 +600,7 @@ HP 10・攻撃力 1 が入っています。** 渡さなかったぶんをコン
 書き方は一つではありません。**実行結果が一致していれば正解**です。
 
 <details>
-<summary>▶ 演習1 の解答を見る</summary>
+<summary>演習1 の解答を見る</summary>
 
 ```java file=JuiceShop.java
 public class JuiceShop {
@@ -634,7 +634,7 @@ public class JuiceShop {
 </details>
 
 <details>
-<summary>▶ 演習2 の解答を見る</summary>
+<summary>演習2 の解答を見る</summary>
 
 ```java file=Monster.java hl=7-11
 public class Monster {
@@ -667,7 +667,7 @@ public class Monster {
 </details>
 
 <details>
-<summary>▶ 演習3 の解答を見る</summary>
+<summary>演習3 の解答を見る</summary>
 
 ```java file=Monster.java hl=7-11,13-17
 public class Monster {
@@ -714,7 +714,7 @@ public class Monster {
 </details>
 
 <details>
-<summary>▶ 発展問題 の解答を見る</summary>
+<summary>発展問題 の解答を見る</summary>
 
 ```java file=Monster.java hl=7-9,11-13
 public class Monster {
