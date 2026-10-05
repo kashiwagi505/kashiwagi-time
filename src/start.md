@@ -62,7 +62,7 @@ eleventyExcludeFromCollections: true
 解答は折りたたみに入っているので、自分で試したあとに開いてください。
 
 <details>
-<summary>▶ 折りたたみはこう開きます（クリック）</summary>
+<summary>折りたたみはこう開きます（クリック）</summary>
 
 このように中身が出てきます。解答はすべてこの形で入っています。
 
@@ -76,7 +76,7 @@ eleventyExcludeFromCollections: true
 <div class="note note--warn">
 <span class="note__title">配布したままではコンパイルが通らないことがあります（それが正常です）</span>
 穴埋め状態のファイルが含まれているため、ダウンロード直後は <code>javac</code> がエラーを出す回があります。
-<code>javac</code> は最初に見つけたエラーで報告を打ち切るので、<strong>1か所直すと次のエラーが現れる</strong>こともあります。
+<code>javac</code> はエラーをまとめて報告することもありますが、構文の誤りなどがあるとそこで先に進めず、<strong>1か所直すと別のエラーが新しく現れる</strong>こともあります。
 どの回でどこまで動くかは、各回のページに書いてあります。
 </div>
 

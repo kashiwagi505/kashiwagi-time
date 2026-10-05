@@ -84,7 +84,7 @@ order: 5
 <span class="note__title">同じものを3回書くと、こうなります</span>
 <ul>
 <li><strong>仕様が変わったら全クラスを直す羽目になる。</strong> 「HP は 0 未満にならない」という決まりを直したくなったら、3か所とも直さなければなりません。1つ忘れたらそこだけ挙動が違います。</li>
-<li><strong>別々のクラスなので、同じリストにまとめられない。</strong> <code>Hero</code> と <code>Wizard</code> に血縁関係がないので、両方を入れられる型が存在しません。前回の名簿が作れなくなります。</li>
+<li><strong>別々のクラスなので、「冒険者の名簿」として1つにまとめられない。</strong> <code>Hero</code> と <code>Wizard</code> に血縁関係がないので、「冒険者」として両方をまとめて扱える型がありません（何でも入る <code>Object</code> 型のリストなら入りますが、<code>Object</code> 型のままでは <code>attack()</code> などを直接呼べません）。前回の名簿が作れなくなります。</li>
 </ul>
 </div>
 
@@ -483,28 +483,28 @@ A〜E のうち、**正しく継承（オーバーライド）できているも
 
 **A**
 
-```java
+```java quiz
 public class Hero extends Adventurer {
 }
 ```
 
 **B**
 
-```java error
+```java quiz
 public class Wizard extend Adventurer {
 }
 ```
 
 **C**
 
-```java error
+```java quiz
 public class Tank extends Adventurer, Hero {
 }
 ```
 
 **D**
 
-```java
+```java quiz
 public class Saint {
     Adventurer base = new Adventurer("聖女", 70, 10);
 }
@@ -512,7 +512,7 @@ public class Saint {
 
 **E**
 
-```java error
+```java quiz
 public class Archer extends Adventurer {
     @Override
     public int attack(int power) {
@@ -713,7 +713,7 @@ for (Adventurer member : heroList) {
 ### 解答・解説
 
 <details>
-<summary>▶ 問1 の解答を見る</summary>
+<summary>問1 の解答を見る</summary>
 
 **正解：A のみ**
 
@@ -741,7 +741,7 @@ for (Adventurer member : heroList) {
 </details>
 
 <details>
-<summary>▶ 問2 の解答を見る</summary>
+<summary>問2 の解答を見る</summary>
 
 3クラスとも同じ形です。`attack()` のメッセージだけが違います。
 
@@ -811,7 +811,7 @@ public class Tank extends Adventurer {
 </details>
 
 <details>
-<summary>▶ 問3 の解答を見る</summary>
+<summary>問3 の解答を見る</summary>
 
 ```java file=Arthur.java hl=1
 public class Arthur extends Hero {
@@ -873,7 +873,7 @@ public class Merlin extends Wizard {
 </details>
 
 <details>
-<summary>▶ チャレンジの答えを見る</summary>
+<summary>チャレンジの答えを見る</summary>
 
 **1. `super.attack();` を追加すると**
 

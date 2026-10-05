@@ -7,6 +7,7 @@
  *   ```java error           わざとコンパイルエラーにするコード（赤枠＋「コンパイルできません」）
  *   ```text                 実行結果・コンソール出力・入力例（ハイライトしない＋「実行結果」）
  *   ```text pseudo          日本語混じりの擬似コード（破線枠＋「擬似コード」）
+ *   ```java quiz            クイズの選択肢。正誤が見た目で分からないよう、エラーでも通常の枠で出す
  *
  *   追加の属性（スペース区切りでいくつでも付けられる）
  *   ```java file=Hero.java  ファイル名ラベルを付ける
@@ -23,6 +24,7 @@
  *   `java` ブロックの中に全角括弧・全角スペース・スマートクォート等が混入していると
  *   ビルド時に警告を出す（ビルドは止めない）。コメントと文字列リテラルの中身は除外する。
  *   `java error` は「全角混入そのものが学習内容」の場合があるためチェック対象外。
+ *   `java quiz` も誤りの選択肢を含むためチェック対象外。
  */
 const fs = require("node:fs");
 const path = require("node:path");
@@ -52,6 +54,7 @@ function parseInfo(info) {
     known: KNOWN_LANGS.includes(lang),
     error: false,
     pseudo: false,
+    quiz: false,
     input: false,
     // 行番号は java だけ既定でON（実行結果に行番号が付くと実際の出力と混同する）
     lineNumbers: lang === "java",
@@ -65,6 +68,7 @@ function parseInfo(info) {
     const val = restVal.join("=");
     if (key === "error") opt.error = true;
     else if (key === "pseudo") opt.pseudo = true;
+    else if (key === "quiz") opt.quiz = true;
     else if (key === "input") opt.input = true;
     else if (key === "nonum") opt.lineNumbers = false;
     else if (key === "num") opt.lineNumbers = true;
@@ -77,7 +81,7 @@ function parseInfo(info) {
 
 /** そのブロックが「Javaソースとして成立していなければならない」ものか */
 function isCheckedJava(opt) {
-  return opt.lang === "java" && !opt.error && !opt.pseudo;
+  return opt.lang === "java" && !opt.error && !opt.pseudo && !opt.quiz;
 }
 
 // ---------------------------------------------------------------------------
@@ -265,7 +269,7 @@ function auditMarkdown(srcDir) {
       }
       for (const a of opt.unknownAttrs) {
         notices.push(
-          `${rel}:${b.startLine}  未定義の属性 \`${a}\` → error / pseudo / input / nonum / num / file= / hl=`
+          `${rel}:${b.startLine}  未定義の属性 \`${a}\` → error / pseudo / quiz / input / nonum / num / file= / hl=`
         );
       }
       if (!isCheckedJava(opt)) continue;

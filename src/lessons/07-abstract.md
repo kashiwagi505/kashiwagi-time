@@ -242,7 +242,8 @@ abstract method specialAttack() in Adventurer
 
 これが <span class="term">実装の強制</span>です。全員が必ず持っていることが保証されるので、
 呼び出す側は **`attacker.specialAttack()` と書くだけ**で済みます。
-中身が空のキャラがいるかもしれない、という心配をしなくてよくなります。
+「このキャラは `specialAttack()` を持っていないかもしれない」という心配をしなくてよくなります。
+（ただし保証されるのは「メソッドがある」ことまでで、中身が正しいかどうかは書いた人しだいです。）
 
 #### 6. 抽象メソッドは、すべての子クラスに及ぶ
 
@@ -537,7 +538,7 @@ A〜E のうち、**正しく使えているもの**をすべて選んでくだ�
 
 **A**
 
-```java
+```java quiz
 public abstract class Adventurer {
     public abstract int specialAttack();
 }
@@ -545,13 +546,13 @@ public abstract class Adventurer {
 
 **B**
 
-```java error
+```java quiz
 Adventurer ren = new Adventurer("れん", 80, 10);
 ```
 
 **C**
 
-```java error
+```java quiz
 public abstract class Adventurer {
     public abstract int specialAttack() {
         System.out.println("スペシャルアタック！");
@@ -562,7 +563,7 @@ public abstract class Adventurer {
 
 **D**
 
-```java error
+```java quiz
 // Adventurer は abstract int specialAttack(); を持つ抽象クラス
 public class Hero extends Adventurer {
     public Hero(String name, int hp, int atk) {
@@ -574,7 +575,7 @@ public class Hero extends Adventurer {
 
 **E**
 
-```java
+```java quiz
 // Adventurer は抽象クラス、Hero はそれを継承した普通のクラス
 Adventurer a = new Hero("勇者", 100, 20);
 ```
@@ -819,7 +820,7 @@ public class Archer extends Adventurer implements Excalibur, Flyable {
 ### 解答・解説
 
 <details>
-<summary>▶ 問1 の解答を見る</summary>
+<summary>問1 の解答を見る</summary>
 
 **正解：A と E**
 
@@ -845,7 +846,7 @@ public class Archer extends Adventurer implements Excalibur, Flyable {
 </details>
 
 <details>
-<summary>▶ 問2 の解答を見る</summary>
+<summary>問2 の解答を見る</summary>
 
 **`Adventurer.java` の変更は2か所だけです。**
 
@@ -950,7 +951,7 @@ Hero.java:1: エラー: Heroはabstractでなく、Adventurer内のabstractメ�
 </details>
 
 <details>
-<summary>▶ 問3 の解答を見る</summary>
+<summary>問3 の解答を見る</summary>
 
 **`Excalibur.java`（新規作成）**
 
@@ -1034,7 +1035,7 @@ public class Hero extends Adventurer implements Excalibur {
 </details>
 
 <details>
-<summary>▶ チャレンジの答えを見る ── なぜ三連矢が出ないのか</summary>
+<summary>チャレンジの答えを見る ── なぜ三連矢が出ないのか</summary>
 
 **`Flyable.java`（新規作成）**
 

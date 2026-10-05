@@ -704,7 +704,7 @@ m.heal(party.get(0));          // 0番の仲間を回復したい！
 ### 解答・解説
 
 <details>
-<summary>▶ 問1 の解答を見る</summary>
+<summary>問1 の解答を見る</summary>
 
 **問1-1 の正解：A と D**
 
@@ -741,7 +741,7 @@ m.heal(party.get(0));          // 0番の仲間を回復したい！
 </details>
 
 <details>
-<summary>▶ 問2 の解答を見る</summary>
+<summary>問2 の解答を見る</summary>
 
 ```java file=PolyGame.java
 // 【TODO①】親の型でリストを作る
@@ -794,7 +794,7 @@ maou.damage(party.get(select).attack());
 </details>
 
 <details>
-<summary>▶ 問3 の解答を見る</summary>
+<summary>問3 の解答を見る</summary>
 
 **1. なぜ `heal()` が呼べないのか**
 

@@ -450,7 +450,7 @@ public class Player {
 使う形になっていれば正解**です。
 
 <details>
-<summary>▶ 問1 の解答を見る</summary>
+<summary>問1 の解答を見る</summary>
 
 ```java file=Student.java
 public class Student {
@@ -481,7 +481,7 @@ getter / setter を足すと通るようになります。**この往復が「�
 </details>
 
 <details>
-<summary>▶ 問2 の解答を見る</summary>
+<summary>問2 の解答を見る</summary>
 
 ```java file=BankAccount.java hl=7-17
 public class BankAccount {
@@ -545,7 +545,7 @@ public class BankAccount {
 </details>
 
 <details>
-<summary>▶ 問3 の解答を見る</summary>
+<summary>問3 の解答を見る</summary>
 
 ```java file=Player.java hl=47-64
 public class Player {

@@ -715,7 +715,7 @@ heroList.sort(Comparator.comparingInt(Adventurer::getAtk));
 実行結果が一致していれば正解**です。
 
 <details>
-<summary>▶ 問1・問2 の解答を見る</summary>
+<summary>問1・問2 の解答を見る</summary>
 
 ```java file=Main.java
 import java.util.ArrayList;
@@ -790,7 +790,7 @@ public class Main {
 </details>
 
 <details>
-<summary>▶ 問3 の解答を見る</summary>
+<summary>問3 の解答を見る</summary>
 
 埋める6か所だけを抜き出したものです。
 
@@ -879,7 +879,7 @@ Exception in thread "main" java.lang.IndexOutOfBoundsException: Index 2 out of b
 </details>
 
 <details>
-<summary>▶ 早く終わった人向けの発展課題</summary>
+<summary>早く終わった人向けの発展課題</summary>
 
 いずれも `Game.java` に手を入れます。
 

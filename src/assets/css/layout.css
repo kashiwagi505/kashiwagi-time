@@ -159,12 +159,12 @@
 .lesson-index__group th {
   text-align: left;
   padding: var(--sp-2) var(--sp-3);
-  background: var(--c-gold);
+  background: var(--c-gold-strong);
   color: #fff;
   font-size: var(--fs-2);
   letter-spacing: 0.04em;
 }
-.lesson-index__group th small { font-weight: 400; opacity: 0.9; margin-left: var(--sp-3); }
+.lesson-index__group th small { font-weight: 400; margin-left: var(--sp-3); }
 
 /* ===========================================================================
    各回ページのヘッダ

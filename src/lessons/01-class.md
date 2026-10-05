@@ -464,7 +464,7 @@ Rank No Name     Eng Math Jap Total Avg
 ### 解答・解説
 
 <details>
-<summary>▶ 第1問の解答を見る</summary>
+<summary>第1問の解答を見る</summary>
 
 `HeightSortWithClass.java` の並べ替え部分。金色の行が埋めたところです。
 
@@ -499,7 +499,7 @@ for (int i = 0; i < students.length - 1; i++) {
 </details>
 
 <details>
-<summary>▶ 第2問の解答を見る</summary>
+<summary>第2問の解答を見る</summary>
 
 `Runner.java`
 
@@ -557,7 +557,7 @@ for (int i = 0; i < count - 1; i++) {
 </details>
 
 <details>
-<summary>▶ 第3問の解答を見る</summary>
+<summary>第3問の解答を見る</summary>
 
 `ExamResult.java`
 
