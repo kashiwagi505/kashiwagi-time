@@ -170,3 +170,4 @@ module.exports = function (eleventyConfig, { srcDir = "src" } = {}) {
 };
 
 module.exports.buildZip = buildZip;
+module.exports.crc32 = crc32;

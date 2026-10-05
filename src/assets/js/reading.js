@@ -18,19 +18,22 @@
   var storageOk = true;
 
   function isObj(x) { return !!x && typeof x === "object" && !Array.isArray(x); }
+  function num(x) { return typeof x === "number" && isFinite(x) ? x : 0; }
+  // 保存データ由来のキーで、オブジェクトの仕組みそのものを書き換えさせない
+  function safeKey(k) { return k !== "__proto__" && k !== "constructor" && k !== "prototype"; }
 
   /** 保存データの形を確かめて、使える部分だけを取り出す（壊れていても JS 全体を止めない） */
   function normalize(raw) {
     var out = { v: 1, lessons: {}, last: null };
     if (!isObj(raw) || !isObj(raw.lessons)) return out;
     for (var slug in raw.lessons) {
-      if (!Object.prototype.hasOwnProperty.call(raw.lessons, slug)) continue;
+      if (!Object.prototype.hasOwnProperty.call(raw.lessons, slug) || !safeKey(slug)) continue;
       var r = raw.lessons[slug];
       if (!isObj(r)) continue;
       var rec = { done: r.done === true, ex: {} };
-      if (typeof r.seen === "number") rec.seen = r.seen;
+      if (num(r.seen)) rec.seen = r.seen;
       if (isObj(r.ex)) {
-        for (var k in r.ex) if (Object.prototype.hasOwnProperty.call(r.ex, k) && r.ex[k] === true) rec.ex[k] = true;
+        for (var k in r.ex) if (Object.prototype.hasOwnProperty.call(r.ex, k) && safeKey(k) && r.ex[k] === true) rec.ex[k] = true;
       }
       out.lessons[slug] = rec;
     }
@@ -38,11 +41,11 @@
     if (isObj(l) && typeof l.slug === "string") {
       out.last = {
         slug: l.slug,
-        order: Number(l.order) || 0,
+        order: num(l.order),
         title: typeof l.title === "string" ? l.title : "",
         id: typeof l.id === "string" ? l.id : "",
         section: typeof l.section === "string" ? l.section : "",
-        ts: Number(l.ts) || 0,
+        ts: num(l.ts),
       };
     }
     return out;
@@ -207,6 +210,14 @@
       });
     }
     render();
+
+    // 別のタブで記録が変わったら取り込む（古い内容で上書きしないように）
+    window.addEventListener("storage", function (ev) {
+      if (ev.key !== KEY && ev.key !== null) return;
+      state = read() || normalize(null);
+      rec = lessonRec(state, slug);
+      render();
+    });
 
     // ---- 解答へのリンク：折りたたみを開いてから移動する
     function openTarget(hash) {
@@ -452,4 +463,11 @@
   var article = document.querySelector("article.lesson[data-lesson]");
   if (article) setupLesson(article);
   setupHome();
+  if (!article) {
+    window.addEventListener("storage", function (ev) {
+      if (ev.key !== KEY && ev.key !== null) return;
+      state = read() || normalize(null);
+      setupHome();
+    });
+  }
 })();

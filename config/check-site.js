@@ -131,6 +131,7 @@ for (const lesson of site.lessons) {
 /** ZIP の中央ディレクトリを読み、各ファイルを展開して CRC を確かめる。ファイル名の一覧を返す */
 function readZip(buf) {
   const zlib = require("node:zlib");
+  const { crc32 } = require("./zip-downloads.js");
   let eocd = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 0xffff); i--) {
     if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
@@ -150,12 +151,16 @@ function readZip(buf) {
     const clen = buf.readUInt16LE(p + 32);
     const local = buf.readUInt32LE(p + 42);
     const name = buf.slice(p + 46, p + 46 + nlen).toString("utf8");
+    if (method !== 0 && method !== 8) throw new Error(`${name}: 未対応の圧縮方式 ${method}`);
     if (buf.readUInt32LE(local) !== 0x04034b50) throw new Error(`${name}: ローカルヘッダが壊れている`);
+    const lnlen = buf.readUInt16LE(local + 26);
+    const lname = buf.slice(local + 30, local + 30 + lnlen).toString("utf8");
+    if (lname !== name) throw new Error(`${name}: 中央ディレクトリとローカルヘッダでファイル名が違う（${lname}）`);
     const dataAt = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
     const comp = buf.slice(dataAt, dataAt + csize);
     const raw = method === 8 ? zlib.inflateRawSync(comp) : comp;
     if (raw.length !== usize) throw new Error(`${name}: 展開後のサイズが合わない`);
-    if ((zlib.crc32(raw) >>> 0) !== crc) throw new Error(`${name}: CRC が合わない`);
+    if (crc32(raw) !== crc) throw new Error(`${name}: CRC が合わない`);
     names.push(name);
     p += 46 + nlen + xlen + clen;
   }
